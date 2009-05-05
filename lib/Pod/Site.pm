@@ -1,7 +1,5 @@
 package Pod::Site;
 
-# $Id: Site.pm 4571 2009-03-01 19:23:18Z david $
-
 use strict;
 use warnings;
 use File::Spec;
