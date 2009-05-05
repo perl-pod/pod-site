@@ -1,0 +1,27 @@
+Revision history for Perl extension Pod::Site.
+
+0.50
+      - Changed name from Pod::Browser and pod_browser to Pod::Site and
+        podsite.
+
+0.30  [Unreleased]
+      - Added --app-name to the docs & make it required. Patch from Dave
+        Rolsky.
+      - Added --css-path, --js-path, & --img-path, which all default to the
+        current hard-coded options. The last one doesn't do anything yet,
+        since there's no processing of the css file. Patch from Dave Rolsky.
+      - Added --example-module. Patch from Dave Rolsky.
+      - Added call to mkpath($doc_root) before trying to write to it. Patch
+        from Dave Rolsky.
+      - No longer tries to generate docs for bin/ unless it exists. Patch
+        from Dave Rolsky.
+      - Don't look in blib/. Patch from Dave Rolsky.
+      - Fixed code that prevented classes with the same base file name from
+        being included in the output.
+      - Switched from Mason-based to JavaScript based. Added --base-uri to
+        specify the base URI for the browser.
+      - Switched to using Pod::Simple::XHTML, distributed with Pod::Simple
+        3.06, and no longer requiring a patch.
+
+0.20  [Unreleased]
+      - Initial version.

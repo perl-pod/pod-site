@@ -1,0 +1,30 @@
+Name
+    Pod::Site - Build browsable HTML documentation for your app
+
+Synopsis
+Description
+    This program searches the lib and bin directories of an application
+    source code root and generates a JavaScript-powered documentation
+    browser from all of the Perl modules and scripts that contain POD. It
+    was originally designed for the Bricolage project
+    (<http://www.bricolage.cc/>, but is has evolved for general use. Visit
+    <http://www.bricolage.cc/docs/current/api/> to see a sample
+    documentation browser in action.
+
+Support
+    This module is stored in an open repository at the following address:
+
+    <https://svn.kineticode.com/Pod-Browser/trunk/>
+
+    Patches against Pod::Site are welcome. Please send bug reports to
+    <bug-pod-browser@rt.cpan.org>.
+
+Author
+    David Wheeler <david@kineticode.com>
+
+Copyright and License
+    Copyright (c) 2004-2008 David Wheeler. Some Rights Reserved.
+
+    This module is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
+
