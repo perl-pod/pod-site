@@ -46,6 +46,7 @@ sub build {
     $self->output_bin($idx_fh);
     $self->end_browser($idx_fh);
     $self->end_toc($toc_fh);
+    $self->copy_etc();
 
     # Close up shop.
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};
@@ -56,24 +57,24 @@ sub build {
 
 sub start_browser {
     my ($self, $fh) = @_;
+    my $version = Pod::Site->VERSION;
     print "Starting site navigation file\n" if $self->{verbose} > 1;
     print $fh _udent( <<"    EOF" );
-    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-              "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <style type="text/css" media="screen">
-            <!-- \@import url("$self->{css_path}/tree.css"); -->
-        </style>
-        <script type="text/javascript" src="$self->{js_path}/tree.js"></script>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>$self->{module_name} $self->{version} API Browser</title>
+        <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
+        <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
+        <meta name="generator" content="Pod::Site $version" />
       </head>
-
-      <body onload="initMenus('$self->{base_uri}')">
-        <h1>$self->{module_name} $self->{version}</h1>
-        <ul class="treemenu">
-          <li id="toc"><a href="toc.html" id="toclink" onclick="return openpod(this)">TOC</a></li>
+      <body>
+        <div id="nav">
+          <h3>$self->{module_name} $self->{version}</h3>
+          <ul id="tree">
+            <li id="toc"><a href="toc.html">TOC</a></li>
     EOF
 }
 
@@ -81,27 +82,26 @@ sub start_toc {
     my ($self, $fh) = @_;
 
     my $module_as_path = join '/', split /::/, $self->{sample_module};
+    my $version = Pod::Site->VERSION;
 
     print "Starting browser TOC file\n" if $self->{verbose} > 1;
     print $fh _udent( <<"    EOF");
-    <!DOCTYPE
-     html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <link rel="stylesheet" type="text/css" href="$self->{css_path}/toc.css" />
-        <script type="text/javascript" src="$self->{js_path}/tree.js"></script>
         <title>$self->{module_name} $self->{version} API Browser</title>
+        <meta name="generator" content="Pod::Site $version" />
       </head>
 
-      <body onload="resizeframe()">
+      <body>
         <h1>$self->{module_name} $self->{version} API Browser</h1>
         <h1>Instructions</h1>
 
         <p>Select class names from the navigation tree to the left. The tree
            is hierarchical and will show all of the classes in $self->{module_name}. The
-           arrows indicate those that have subclasses, while the diamond icon
+           triangles indicate those that have subclasses, while the diamond icon
            represents classes without subclasses.</p>
 
         <p>You can access the API browser at any time at this URL. But you can
@@ -112,10 +112,8 @@ sub start_toc {
            any of these links will work:</p>
 
         <ul>
-          <li><a href="./?q=$self->{sample_module}" onclick="return podlink('$self->{sample_module}');">/?q=$self->{sample_module}</a></li>
-          <li><a href="./?$self->{sample_module}" onclick="return podlink('$self->{sample_module}');">/?$self->{sample_module}</a></li>
-          <li><a href="./$self->{sample_module}" onclick="return podlink('$self->{sample_module}');">/$self->{sample_module}</a></li>
-          <li><a href=".$module_as_path" onclick="return podlink('$self->{sample_module}');">$module_as_path</a></li>
+          <li><a href="./?$self->{sample_module}">/?$self->{sample_module}</a></li>
+          <li><a href="./$self->{sample_module}">/$self->{sample_module}</a></li>
         </ul>
 
         <p>Happy Hacking!</p>
@@ -139,27 +137,26 @@ sub output {
             my $item = $key;
             if ($tree->{"$key.pm"}) {
                 my $code = \$tree->{"$key.pm"};
-                if (my $desc = $self->get_desc($code, $self)) {
-                    $item = qq{<a href="$self->{uri}$key.html" }
-                      . qq{onmousedown="return openpod(this);">$key</a>};
-                    $self->_output_class($fh, $fn, $code, $self, 1, $desc);
+                if (my $desc = $self->get_desc($class, $code, $self)) {
+                    $item = qq{<a href="$self->{uri}$key.html">$key</a>};
+                    $self->_output_class($fh, $fn, $code, $class, 1, $desc);
                 }
-                $self->{seen}{$self} = 1;
+                $self->{seen}{$class} = 1;
             }
 
             # Now recursively descend the tree.
-            $self->{uri} .= "$key/";
             print "Outputting nav link\n" if $self->{verbose} > 2;
             print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-              qq{<li id="$self">$item\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
+              qq{<li id="$class">$item\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
             ++$self->{indent};
+            $self->{uri} .= "$key/";
             $self->output($fh, $contents);
             print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
               $self->{base_space}, $self->{spacer} x --$self->{indent}, "</li>\n";
             $self->{uri} =~ s|$key/$||;
         } else {
             # It's a class. Create a link to it.
-            $self->_output_class($fh, $fn, \$contents, $self) unless $self->{seen}{$self};
+            $self->_output_class($fh, $fn, \$contents, $class) unless $self->{seen}{$class};
         }
     }
 }
@@ -172,11 +169,6 @@ sub output_bin {
     print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
       qq{<li id="bin">bin\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
 
-    # Start the list in the TOC.
-    print $fh $self->{base_space}, "</ul>\n",
-               $self->{base_space}, "<h3>Command-Line Programs</h3>\n",
-               $self->{base_space}, "<ul>\n";
-
     my $rule = File::Find::Rule->file->executable;
     my $tree = File::Slurp::Tree::slurp_tree($self->{bin}, rule => $rule);
 
@@ -185,19 +177,17 @@ sub output_bin {
         next if ref $tree->{$pl};
         print "Reading $pl\n" if $self->{verbose} > 1;
         # Get the description.
-        my $desc = $self->get_desc(\$tree->{$pl}, $pl) or next;
+        my $desc = $self->get_desc($pl, \$tree->{$pl}, $pl) or next;
 
         # Output the Tree Browser Link.
-        print "Outputting nav link\n" if $self->{verbose} > 2;
+        print "Outputting $pl nav link\n" if $self->{verbose} > 2;
         print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-          qq{<li id="$pl"><a href="$pl.html" },
-          qq{onclick="return openpod(this);">$pl</a></li>\n};
+          qq{<li id="$pl"><a href="$pl.html">$pl</a></li>\n};
 
         # Output the TOC link.
         print "Outputting toc link\n" if $self->{verbose} > 2;
-        print $fh $self->{base_space}, $self->{spacer},
-          qq{<li><a href="$pl.html" onclick="return podlink('$pl');">}
-          . qq{$pl</a>&#x2014;$desc</li>\n};
+        print {$self->{toc_fh}} $self->{base_space},
+          qq{  <li><a href="$pl.html" rel="section">$pl</a>&#x2014;$desc</li>\n};
     }
 
     print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
@@ -208,8 +198,9 @@ sub end_browser {
     my ($self, $fh) = @_;
     print "Finishing browser navigation file\n" if $self->{verbose} > 1;
     print $fh _udent( <<"    EOF" );
-        </ul>
-        <iframe src="" id="podframe" name="podframe"></iframe>
+          </ul>
+        </div>
+        <div id="doc"></div>
       </body>
     </html>
     EOF
@@ -243,37 +234,47 @@ sub batch_html {
     $batchconv->batch_convert( \@_, $self->{doc_root} );
 }
 
+sub copy_etc {
+    my $self = shift;
+    require File::Copy;
+    require File::Basename;
+    my $from = File::Basename::dirname(__FILE__);
+    for my $ext qw(css js) {
+        File::Copy::copy(
+            File::Spec->catfile( $from, "podsite.$ext" ),
+            $self->{doc_root}
+        );
+    }
+}
+
 sub _udent {
     my $string = shift;
-    $string =~ s/[ ]{4}//mg;
+    $string =~ s/^[ ]{4}//gm;
     return $string;
 }
 
 sub _output_class {
     my ($self, $fh, $key, $contents, $class, $no_link, $desc) = @_;
 
-    $desc ||= $self->get_desc($contents, $class) or return;
+    $desc ||= $self->get_desc($class, $contents, $class) or return;
 
     # Output the Tree Browser Link.
     print "Outputting $class nav link\n" if $self->{verbose} > 2;
     print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-      qq{<li id="$class"><a href="$self->{uri}$key.html" },
-      qq{onclick="return openpod(this);">$key</a></li>\n}
+      qq{<li id="$class"><a href="$self->{uri}$key.html">$key</a></li>\n}
       unless $no_link;
 
     # Output the TOC link.
     print "Outputting $class TOC link\n" if $self->{verbose} > 2;
-    my $toc_fh = $self->{toc_fh};
-    print $toc_fh $self->{base_space}, $self->{spacer},
-      qq{<li><a href="$self->{uri}$key.html" onclick="return podlink('$class');">}
-      . qq{$class</a>&#x2014;$desc</li>\n};
+    print {$self->{toc_fh}} $self->{base_space}, $self->{spacer},
+      qq{<li><a href="$self->{uri}$key.html" rel="section">$class</a>—$desc</li>\n};
     return 1;
 }
 
 sub get_desc {
-    my ($self, $contents) = @_;
-    my ($desc) = $$contents =~ /=head1 NAME\n\n$self\s+-\s+([^\n]+)\n/i;
-    print "$self has no POD or no description in a =head1 NAME section\n"
+    my ($self, $what, $contents) = @_;
+    my ($desc) = $$contents =~ /=head1 NAME\n\n$what\s+-\s+([^\n]+)\n/i;
+    print "$what has no POD or no description in a =head1 NAME section\n"
       if $self->{verbose} && !$desc;
     return $desc;
 }
@@ -316,9 +317,8 @@ sub _config {
 
     my %opts = (
         verbose    => 0,
-        css_path   => '/ui/css',
-        js_path    => '/ui/js',
-        img_path   => '/ui/img',
+        css_path   => '',
+        js_path    => '',
         index_file => 'index.html',
         base_uri   => '',
     );
@@ -333,7 +333,6 @@ sub _config {
         'index-file|f=s'    => \$opts{index_file},
         'css-path|c=s'      => \$opts{css_path},
         'js-path|k=s'       => \$opts{js_path},
-        'img-path|g=s'      => \$opts{img_path},
         'verbose|V+'        => \$opts{verbose},
         'help|h'            => \$opts{help},
         'man|m'             => \$opts{man},
@@ -422,15 +421,10 @@ sub start_L {
     my $to     = $flags->{to} or return $self->SUPER::start_L($flags);
     my $search = Pod::Site::Search->instance
         or return $self->SUPER::start_L($flags);
-    if ($search->name2path->{$to}) {
-        my $section = $flags->{section} ? "#$flags->{section}" : '';
-        $self->{scratch} .= qq{<a href="$to$section" }
-            . qq{onclick="return podlink('$to');">}
-    }
-    else {
-        $self->SUPER::start_L($flags);
-        $self->{scratch} =~ s/>$/ onclick="return leavelink(this)">/;
-    }
+    my $url = $search->name2path->{$to}
+        or return $self->SUPER::start_L($flags);
+    $url .= "#$flags->{section}" if $flags->{section};
+    $self->{scratch} .= qq{<a rel="section" href="$url">};
 }
 
 sub html_header {
@@ -443,15 +437,31 @@ sub html_header {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" type="text/css" href="$site->{css_path}/pod.css" />
-    <script type="text/javascript" src="$site->{js_path}/tree.js"></script>
-    <script type="text/javascript">frameit('$site->{base_uri}');</script>
     <meta name="generator" content="Pod::Site $version" />
     <title>$title</title>
   </head>
   <body onload="resizeframe()" class="pod">};
 }
 
+# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=45829.
+sub start_C { $_[0]->{scratch} .= '<code>';  $_[0]->{in_verbatim} = 1; }
+sub end_C   { $_[0]->{scratch} .= '</code>'; $_[0]->{in_verbatim} = 0; }
+
+# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=43489
+HACK: {
+    package Pod::Simple::BlackBox;
+    my $orig;
+    BEGIN { $orig = \&Pod::Simple::BlackBox::_ponder_Verbatim }
+    no warnings 'redefine';
+    sub _ponder_Verbatim {
+        my ($self, $para) = @_;
+        (my $spaces = $para->[2]) =~ s/\S.*//;
+        for (my $i = 2; $i < @$para; $i++) {
+            $para->[$i] =~ s/^$spaces//;
+        }
+        return $self->$orig($para);
+    }
+}
 1;
 __END__
 
@@ -515,13 +525,13 @@ other than all uppercase.
 
 =over
 
-=item David Wheeler <david@kineticode.com>
+=item David Wheeler <david@justatheory.com>
 
 =back
 
 =head1 Copyright and License
 
-Copyright (c) 2004-2008 David Wheeler. Some Rights Reserved.
+Copyright (c) 2004-2009 David Wheeler. Some Rights Reserved.
 
 This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
