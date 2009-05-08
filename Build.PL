@@ -29,5 +29,12 @@ Module::Build->new(
     recommends         => {
         'Test::Pod'      => '1.20',
     },
-
+    meta_merge         => {
+        resources => {
+            homepage    => 'http://search.cpan.org/dist/Pod-Site/',
+            bugtracker  => 'http://github.com/theory/pod-site/issues/',
+#           MailingList => 'mailto:module-build@perl.org',
+            repository  => 'http://github.com/theory/pod-site/tree/',
+        }
+    },
 )->create_build_script;
