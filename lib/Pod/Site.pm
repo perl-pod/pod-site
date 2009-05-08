@@ -507,12 +507,10 @@ see a sample documentation browser in action.
 
 =head1 Support
 
-This module is stored in an open repository at the following address:
+This module is stored in an open GitHub repository,
+L<http://github.com/theory/pod-site/tree/>. Feel free to fork and contribute!
 
-L<https://svn.kineticode.com/Pod-Browser/trunk/>
-
-Patches against Pod::Site are welcome. Please send bug reports to
-<bug-pod-browser@rt.cpan.org>.
+Please file bug reports at L<http://github.com/theory/pod-site/issues>.
 
 =head1 Author
 
