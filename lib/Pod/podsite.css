@@ -93,3 +93,7 @@ body > #nav {
 #tree li.closed ul {
   display:none !important;
 }
+
+#index ul {
+  padding-left: 2em;
+}

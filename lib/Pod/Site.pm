@@ -411,20 +411,21 @@ use base 'Pod::Simple::XHTML';
 
 sub new {
     my $self = shift->SUPER::new;
-#    $self->{file_tree} = shift;
     $self->index(1);
     return $self;
 }
 
 sub start_L {
     my ($self, $flags) = @_;
-    my $to     = $flags->{to} or return $self->SUPER::start_L($flags);
     my $search = Pod::Site::Search->instance
         or return $self->SUPER::start_L($flags);
-    my $url = $search->name2path->{$to}
-        or return $self->SUPER::start_L($flags);
-    $url .= "#$flags->{section}" if $flags->{section};
-    $self->{scratch} .= qq{<a rel="section" href="$url">};
+    my $to  = $flags->{to};
+    my $url = $to? $search->name2path->{$to} : '';
+    my $id  = $flags->{section};
+    return $self->SUPER::start_L($flags) unless $url || ($id && !$to);
+    my $rel = $id ? 'subsection' : 'section';
+    $url   .= '#' . $self->idify($id, 1) if $id;
+    $self->{scratch} .= qq{<a rel="$rel" href="$url">};
 }
 
 sub html_header {
@@ -462,6 +463,7 @@ HACK: {
         return $self->$orig($para);
     }
 }
+
 1;
 __END__
 
