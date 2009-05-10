@@ -67,6 +67,7 @@ sub start_browser {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>$self->{module_name} $self->{version} API Browser</title>
         <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
+        <meta name="base-uri" content="$self->{base_uri}" />
         <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
         <meta name="generator" content="Pod::Site $version" />
       </head>
@@ -187,7 +188,7 @@ sub output_bin {
         # Output the TOC link.
         print "Outputting toc link\n" if $self->{verbose} > 2;
         print {$self->{toc_fh}} $self->{base_space},
-          qq{  <li><a href="$pl.html" rel="section">$pl</a>&#x2014;$desc</li>\n};
+          qq{  <li><a href="$pl.html" rel="section" name="$pl">$pl</a>&#x2014;$desc</li>\n};
     }
 
     print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
@@ -267,7 +268,7 @@ sub _output_class {
     # Output the TOC link.
     print "Outputting $class TOC link\n" if $self->{verbose} > 2;
     print {$self->{toc_fh}} $self->{base_space}, $self->{spacer},
-      qq{<li><a href="$self->{uri}$key.html" rel="section">$class</a>—$desc</li>\n};
+      qq{<li><a href="$self->{uri}$key.html" rel="section" name="$class">$class</a>—$desc</li>\n};
     return 1;
 }
 
@@ -418,14 +419,15 @@ sub new {
 sub start_L {
     my ($self, $flags) = @_;
     my $search = Pod::Site::Search->instance
-        or return $self->SUPER::start_L($flags);
-    my $to  = $flags->{to};
+        or return $self->SUPER::start_L($self);
+    my $to  = $flags->{to} || '';
     my $url = $to? $search->name2path->{$to} : '';
     my $id  = $flags->{section};
     return $self->SUPER::start_L($flags) unless $url || ($id && !$to);
     my $rel = $id ? 'subsection' : 'section';
     $url   .= '#' . $self->idify($id, 1) if $id;
-    $self->{scratch} .= qq{<a rel="$rel" href="$url">};
+    $to   ||= $self->default_title;
+    $self->{scratch} .= qq{<a rel="$rel" href="$url" name="$to">};
 }
 
 sub html_header {

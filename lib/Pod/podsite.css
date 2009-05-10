@@ -97,3 +97,7 @@ body > #nav {
 #index ul {
   padding-left: 2em;
 }
+
+#doc .oops {
+  color: red;
+}
