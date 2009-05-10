@@ -1,7 +1,5 @@
 #!/usr/bin/perl -w
 
-use lib 'lib';
-use lib '/Users/david/dev/perl/Pod-Simple/lib';
 use strict;
 use warnings;
 use Pod::Site;
