@@ -238,8 +238,7 @@ sub batch_html {
 sub copy_etc {
     my $self = shift;
     require File::Copy;
-    require File::Basename;
-    my $from = File::Basename::dirname(__FILE__);
+    (my $from = __FILE__) =~ s/[.]pm$//;
     for my $ext qw(css js) {
         File::Copy::copy(
             File::Spec->catfile( $from, "podsite.$ext" ),
