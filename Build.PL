@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use Module::Build;
 
-Module::Build->new(
+my $build = Module::Build->new(
     module_name        => 'Pod::Site',
     license            => 'perl',
     configure_requires => {
@@ -35,4 +35,8 @@ Module::Build->new(
             repository  => 'http://github.com/theory/pod-site/tree/',
         }
     },
-)->create_build_script;
+);
+
+$build->add_build_element('js');
+$build->add_build_element('css');
+$build->create_build_script;
