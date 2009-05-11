@@ -5,7 +5,6 @@ use Module::Build;
 Module::Build->new(
     module_name        => 'Pod::Site',
     license            => 'perl',
-    create_readme      => 1,
     configure_requires => {
         'Module::Build' => '0.2701',
     },
