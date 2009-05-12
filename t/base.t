@@ -9,3 +9,4 @@ BEGIN {
     $CLASS = 'Pod::Site';
     use_ok($CLASS) or die;
 }
+
