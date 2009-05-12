@@ -7,6 +7,6 @@ use Test::More 'no_plan';
 my $CLASS;
 BEGIN {
     $CLASS = 'Pod::Site';
-    use_ok($CLASS) or die;
+    use_ok $CLASS or die;
 }
 
