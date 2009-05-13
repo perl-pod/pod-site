@@ -57,7 +57,10 @@ body > #nav {
    margin: 0;
 }
 
-#doc > * { margin: 20px; }
+#doc > * {
+  margin-left: 20px;
+  margin-right: 20px;
+}
 #doc code {
   font-size: 120%;
 }
@@ -70,11 +73,37 @@ body > #nav {
   overflow: auto;
 }
 
-#doc ul {
-  padding-left: 0;
+#doc ul, #doc ol {
   list-style-position: inside;
+  padding-left: 1em;
+  margin-bottom: 0;
 }
-
+#doc li {
+  text-indent: -1em;
+}
+#doc li p {
+   text-indent: 0;
+}
+#doc h1, #doc h2 {
+  font-family: helvetica, arial, sans-serif;
+  font-weight: 100;
+  text-align: right;
+}
+#doc h1 {
+  border-bottom: 1px solid #808080;
+  letter-spacing: 4px;
+  font-size: 250%;
+}
+#doc h2 {
+  border-bottom: 1px dashed #808080;
+  letter-spacing: 3px;
+  font-size: 150%;
+}
+#doc h3, #doc h4, #doc h5, #doc h6 {
+  font-family: helvetica, arial, sans-serif;
+  margin-bottom: 0;
+}
+#doc p { margin-top: 0 }
 #tree, #tree ul {
   list-style : none;
   margin: 0;
