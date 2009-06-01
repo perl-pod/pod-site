@@ -109,7 +109,7 @@ sub start_toc {
            also link to a particular $self->{module_name} class, and the browser will
            load that class, with the navigation open to and highlighting the
            class. You can use a few different ways of linking to a specific
-           class. For example, if you wanted to access $self->{sample_module} class,
+           class. For example, if you wanted to access $self->{sample_module},
            any of these links will work:</p>
 
         <ul>
