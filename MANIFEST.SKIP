@@ -25,7 +25,7 @@
 \b\.#
 
 # Avoid build files.
-^Pod-Browser
+^Pod-Site
 
 # Avoid spelling test.
 pod-spelling.t$
