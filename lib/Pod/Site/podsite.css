@@ -1,6 +1,7 @@
 body {
     margin: 0;
     padding: 0;
+    *padding: 20px; /* Fix for IE6/7 */
     background-color: #FFF;
     font-family: trebuchet ms, verdana, tahoma, helvetica, arial;
     font-size: 90%;
@@ -128,4 +129,18 @@ body > #nav {
 
 #doc .oops {
   color: red;
+}
+
+/* IE6 specific overrides */
+
+* html #nav li {
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+}
+* html #nav a {
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #555;
+}
+* html #nav {
+	clear: both;
 }
