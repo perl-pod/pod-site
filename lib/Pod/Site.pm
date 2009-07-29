@@ -3,6 +3,7 @@ package Pod::Site;
 use strict;
 use warnings;
 use File::Spec;
+use Pod::Simple '3.08';
 use vars '$VERSION';
 $VERSION = '0.50';
 
@@ -444,10 +445,6 @@ sub html_header {
   </head>
   <body onload="resizeframe()" class="pod">};
 }
-
-# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=45829.
-sub start_C { $_[0]->{scratch} .= '<code>';  $_[0]->{in_verbatim} = 1; }
-sub end_C   { $_[0]->{scratch} .= '</code>'; $_[0]->{in_verbatim} = 0; }
 
 # XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=43489
 HACK: {

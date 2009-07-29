@@ -22,7 +22,7 @@ my $build = Module::Build->new(
         'File::Spec'        => 0,
         'Getopt::Long'      => 0,
         'Module::Build'     => '0.34',
-        'Pod::Simple'       => '3.06',
+        'Pod::Simple'       => '3.08',
         'Pod::Usage'        => 0,
     },
     recommends         => {
