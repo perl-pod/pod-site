@@ -6,10 +6,10 @@ my $build = Module::Build->new(
     module_name        => 'Pod::Site',
     license            => 'perl',
     configure_requires => {
-        'Module::Build' => '0.2701',
+        'Module::Build' => '0.34',
     },
     build_requires     => {
-        'Module::Build' => '0.2701',
+        'Module::Build' => '0.34',
         'Test::More'    => '0.17',
     },
     requires           => {
@@ -21,7 +21,7 @@ my $build = Module::Build->new(
         'File::Slurp::Tree' => 0,
         'File::Spec'        => 0,
         'Getopt::Long'      => 0,
-        'Module::Build'     => '0.2701',
+        'Module::Build'     => '0.34',
         'Pod::Simple'       => '3.06',
         'Pod::Usage'        => 0,
     },
