@@ -489,12 +489,13 @@ Pod::Site - Build browsable HTML documentation for your app
 
 =head1 Description
 
-This program searches the F<lib> and F<bin> directories of an application
-source code root and generates a JavaScript-powered documentation browser from
-all of the Perl modules and scripts that contain POD. It was originally
-designed for the Bricolage project (L<http://www.bricolage.cc/>, but is has
-evolved for general use. Visit L<http://www.bricolage.cc/docs/current/api/> to
-see a sample documentation browser in action.
+This program searches the F<lib> and F<bin> directories of a module
+distribution and generates a jQuery-powered documentation browser from all of
+the Perl modules and scripts that contain POD. It was originally designed for
+the Bricolage project (L<http://www.bricolage.cc/>, but is has evolved for
+general use. Visit L<http://www.bricolage.cc/docs/current/api/> to see a
+sample documentation browser in action. The documentation browser supports
+Safari, Firefox, and IE7 up.
 
 =head1 Options
 
