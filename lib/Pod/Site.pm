@@ -498,12 +498,36 @@ general use. Visit L<http://www.bricolage.cc/docs/current/api/> to see a
 sample documentation browser in action. The documentation browser supports
 Safari, Firefox, and IE7 up.
 
+Doc Notes:
+
+* --base-uri can be passed more than once, e.g., for symlinked base URIs
+  (/docs/current/api).
+
+* Pod::Simple must be patched with the patch
+  [here](https://rt.cpan.org/Ticket/Display.html?id=45839).
+
+* Supported Browsers:
+
+  + Firefox 3 (2?)
+  + IE 7 (8?)
+  + Safari 3-4
+
 =head1 Options
 
   -V --verbose             Incremental verbose mode.
   -h --help                Print a usage statement and exit.
   -m --man                 Print the complete documentation and exit.
   -v --version             Print the version number and exit.
+
+=head1 To Do
+
+=over
+
+=item *
+
+Add support for resizing the nav pane.
+
+=back
 
 =head1 Support
 
