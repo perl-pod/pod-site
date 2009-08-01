@@ -60,6 +60,7 @@ sub start_browser {
     my ($self, $fh) = @_;
     my $version = Pod::Site->VERSION;
     print "Starting site navigation file\n" if $self->{verbose} > 1;
+    my $base = join "\n        ", map { qq{<meta name="base-uri" content="$_" />} } @{ $self->{base_uri} };
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -68,7 +69,7 @@ sub start_browser {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>$self->{module_name} $self->{version} API Browser</title>
         <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
-        <meta name="base-uri" content="$self->{base_uri}" />
+        $base
         <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
         <meta name="generator" content="Pod::Site $version" />
       </head>
@@ -321,14 +322,14 @@ sub _config {
         css_path   => '',
         js_path    => '',
         index_file => 'index.html',
-        base_uri   => '',
+        base_uri   => undef,
     );
 
     Getopt::Long::GetOptions(
         'module-root|a=s'   => \$opts{module_root},
         'module-name|n=s'   => \$opts{module_name},
         'doc-root|d=s'      => \$opts{doc_root},
-        'base-uri|b=s'      => \$opts{base_uri},
+        'base-uri|b=s@'     => \$opts{base_uri},
         'version-in|i=s'    => \$opts{version_in},
         'sample-module|e=s' => \$opts{sample_module},
         'index-file|f=s'    => \$opts{index_file},
@@ -369,7 +370,7 @@ sub _config {
     ) unless -d $opts{module_root} && (-d $opts{lib} || -d $opts{bin});
 
     # Modify options and set defaults as appropriate.
-    $opts{base_uri} .= '/' unless $opts{base_uri} =~ m{/$};
+    for (@{ $opts{base_uri} }) { $_ .= '/' unless m{/$}; }
     $opts{sample_module} ||= $opts{module_name};
 
     return \%opts;
