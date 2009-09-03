@@ -339,7 +339,7 @@ sub _config {
         'help|h'            => \$opts{help},
         'man|m'             => \$opts{man},
         'version|v'         => \$opts{version},
-    ) or $self->_pod2usage;
+    ) or $self->pod2usage;
 
     # Handle documentation requests.
     $self->pod2usage(
