@@ -223,8 +223,6 @@ sub batch_html {
     my $self = shift;
     require Pod::Simple::HTMLBatch;
     print "Creating HTML with Pod::Simple::XHTML\n" if $self->{verbose} > 1;
-    # XXX Send a patch to get this turned into an accessor like render_class().
-    $Pod::Simple::HTMLBatch::SEARCH_CLASS = 'Pod::Site::Search';
     # XXX I'd rather have a way to get this passed to the P::S::XHTML object.
     local $Pod::Site::_instance = $self;
     my $batchconv = Pod::Simple::HTMLBatch->new;
@@ -234,6 +232,7 @@ sub batch_html {
     $batchconv->css_flurry(0);
     $batchconv->javascript_flurry(0);
     $batchconv->html_render_class('Pod::Site::XHTML');
+    $batchconv->search_class('Pod::Site::Search');
     $batchconv->batch_convert( \@_, $self->{doc_root} );
 }
 
@@ -422,12 +421,12 @@ sub start_L {
     my $search = Pod::Site::Search->instance
         or return $self->SUPER::start_L($self);
     my $to  = $flags->{to} || '';
-    my $url = $to? $search->name2path->{$to} : '';
+    my $url = $to ? $search->name2path->{$to} : '';
     my $id  = $flags->{section};
     return $self->SUPER::start_L($flags) unless $url || ($id && !$to);
     my $rel = $id ? 'subsection' : 'section';
     $url   .= '#' . $self->idify($id, 1) if $id;
-    $to   ||= $self->default_title;
+    $to   ||= $self->title || $self->default_title || '';
     $self->{scratch} .= qq{<a rel="$rel" href="$url" name="$to">};
 }
 
