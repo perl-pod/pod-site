@@ -447,20 +447,29 @@ sub html_header {
   <body onload="resizeframe()" class="pod">};
 }
 
-# XXX Workaround for https://rt.cpan.org/Ticket/Display.html?id=43489
-HACK: {
-    package Pod::Simple::BlackBox;
-    my $orig;
-    BEGIN { $orig = \&Pod::Simple::BlackBox::_ponder_Verbatim }
-    no warnings 'redefine';
-    sub _ponder_Verbatim {
-        my ($self, $para) = @_;
-        (my $spaces = $para->[2]) =~ s/\S.*//;
-        for (my $i = 2; $i < @$para; $i++) {
-            $para->[$i] =~ s/^$spaces//;
-        }
-        return $self->$orig($para);
-    }
+# Future-proof against Pod::Simple::XHTML implementing
+# batch_mode_page_object_init(). It doesn't currently, but since
+# Pod::Simple::HTMLBatch calls it if it exists (as it does here in our
+# subclass), it might be added in the future, so be sure to call it if it gets
+# added.
+
+my $orig;
+BEGIN { $orig = __PACKAGE__->can('batch_mode_page_object_init') };
+
+sub batch_mode_page_object_init {
+    my $self = shift;
+
+    # Call the superclass method if it exists.
+    $orig->($self, @_) if $orig;
+
+    # Strip leading spaces from verbatim blocks equivalent to the indent of
+    # the first line.
+    $self->strip_verbatim_indent(sub {
+        my $lines = shift;
+        (my $indent = $lines->[0]) =~ s/\S.*//;
+        return $indent;
+    });
+    return $self;
 }
 
 1;
