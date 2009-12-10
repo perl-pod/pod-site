@@ -9,8 +9,9 @@ my $build = Module::Build->new(
         'Module::Build' => '0.34',
     },
     build_requires     => {
-        'Module::Build' => '0.34',
-        'Test::More'    => '0.17',
+        'Module::Build'    => '0.34',
+        'Test::More'       => '0.17',
+        'Test::MockModule' => '0.05',
     },
     requires           => {
         'perl'              => 5.006_002,
@@ -32,7 +33,6 @@ my $build = Module::Build->new(
         resources => {
             homepage    => 'http://search.cpan.org/dist/Pod-Site/',
             bugtracker  => 'http://github.com/theory/pod-site/issues/',
-#           MailingList => 'mailto:module-build@perl.org',
             repository  => 'http://github.com/theory/pod-site/tree/',
         }
     },

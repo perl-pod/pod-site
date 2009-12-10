@@ -325,7 +325,6 @@ sub _config {
     );
 
     Getopt::Long::GetOptions(
-        'module-root|a=s'   => \$opts{module_root},
         'module-name|n=s'   => \$opts{module_name},
         'doc-root|d=s'      => \$opts{doc_root},
         'base-uri|b=s@'     => \$opts{base_uri},
@@ -333,7 +332,7 @@ sub _config {
         'sample-module|e=s' => \$opts{sample_module},
         'index-file|f=s'    => \$opts{index_file},
         'css-path|c=s'      => \$opts{css_path},
-        'js-path|k=s'       => \$opts{js_path},
+        'js-path|j=s'       => \$opts{js_path},
         'verbose|V+'        => \$opts{verbose},
         'help|h'            => \$opts{help},
         'man|m'             => \$opts{man},
@@ -355,18 +354,22 @@ sub _config {
     }
 
     # Check required options.
-    for my $key qw(module_root module_name doc_root base_uri) {
-        next if $opts{$key};
-        ( my $opt = $key ) =~ s/_/-/g;
-        $self->pod2usage( '-message' => "Missing required --$opt option" );
+    if (my @missing = map {
+        ( my $opt = $_ ) =~ s/_/-/g;
+        "--$opt";
+    } grep { !$opts{$_} } qw(doc_root base_uri)) {
+        my $pl = @missing > 1 ? 's' : '';
+        my $last = pop @missing;
+        my $disp = @missing ? join(', ', @missing) . " and $last" : $last;
+        $self->pod2usage( '-message' => "Missing required $disp option$pl" );
     }
 
     # Make sure we can find stuff to convert.
-    $opts{bin} = File::Spec->catdir( $opts{module_root}, 'bin' );
-    $opts{lib} = File::Spec->catdir( $opts{module_root}, 'lib' );
-    $self->pod2usage(
-        '-message' => "$opts{module_root} has no 'lib' or 'bin' subdirectory"
-    ) unless -d $opts{module_root} && (-d $opts{lib} || -d $opts{bin});
+    # $opts{bin} = File::Spec->catdir( $opts{module_root}, 'bin' );
+    # $opts{lib} = File::Spec->catdir( $opts{module_root}, 'lib' );
+    # $self->pod2usage(
+    #     '-message' => "$opts{module_root} has no 'lib' or 'bin' subdirectory"
+    # ) unless -d $opts{module_root} && (-d $opts{lib} || -d $opts{bin});
 
     # Modify options and set defaults as appropriate.
     for (@{ $opts{base_uri} }) { $_ .= '/' unless m{/$}; }
@@ -491,10 +494,10 @@ Pod::Site - Build browsable HTML documentation for your app
 
 =head1 Usage
 
-  podsite --module-root /path/to/app/root \
-          --module-name App               \
+  podsite --module-name App               \
           --doc-root /path/to/output/html \
-          --base-uri /path/to/browser/home
+          --base-uri /path/to/browser/home \
+          /path/to/app/root
 
 =head1 Description
 
