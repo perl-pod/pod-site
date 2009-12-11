@@ -3,7 +3,14 @@ package Pod::Site;
 use strict;
 use warnings;
 use File::Spec;
+use Carp;
 use Pod::Simple '3.08';
+use Object::Tiny qw(
+    module_roots
+    doc_root
+    base_uri
+);
+
 use vars '$VERSION';
 $VERSION = '0.50';
 
@@ -14,7 +21,24 @@ sub run {
 
 sub new {
     my ( $class, $params ) = @_;
-    bless { %{ $params } } => $class;
+    my $self = bless { %{ $params || {} } } => $class;
+
+    if (my @missing = grep { !$self->{$_} } qw(doc_root base_uri module_roots)) {
+        my $pl = @missing > 1 ? 's' : '';
+        my $last = pop @missing;
+        my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '') . " and $last" : $last;
+        croak "Missing required parameters $disp";
+    }
+
+    my $roots = ref $self->{module_roots} eq 'ARRAY'
+        ? $self->{module_roots}
+        :( $self->{module_roots} = [$self->{module_roots}] );
+    for my $path (@{ $roots }) {
+        croak "The module root $path does not exist\n" unless -e $path;
+        croak "The module root $path is not a directory\n" unless -d $path;
+    }
+
+    return $self;
 }
 
 sub build {
@@ -360,9 +384,16 @@ sub _config {
     } grep { !$opts{$_} } qw(doc_root base_uri)) {
         my $pl = @missing > 1 ? 's' : '';
         my $last = pop @missing;
-        my $disp = @missing ? join(', ', @missing) . " and $last" : $last;
+        my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '') . " and $last" : $last;
         $self->pod2usage( '-message' => "Missing required $disp option$pl" );
     }
+
+    # Check for one or more module roots.
+    unless (@ARGV) {
+        $self->pod2usage( '-message' => "Missing path to module root" );
+    }
+
+    $opts{module_roots} = \@ARGV;
 
     # Make sure we can find stuff to convert.
     # $opts{bin} = File::Spec->catdir( $opts{module_root}, 'bin' );

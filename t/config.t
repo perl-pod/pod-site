@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 21;
+use Test::More tests => 23;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -13,17 +13,17 @@ BEGIN {
     use_ok $CLASS or die;
 }
 
-my $libdir   = catdir qw(t lib);
+my $mod_root = catdir qw(t lib);
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
-my $base_uri  = '/docs/';
+my $base_uri = '/docs/';
 
 END { remove_tree if -d $tmpdir }
-
 
 my %config = (
     doc_root      => $doc_root,
     base_uri      => [$base_uri],
+    module_roots  => [$mod_root],
     verbose       => 0,
     version       => undef,
     css_path      => '',
@@ -37,7 +37,7 @@ my %config = (
 );
 
 DEFAULTS: {
-    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri );
+    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root );
     is_deeply $CLASS->_config, \%config, 'Should have default config';
 }
 
@@ -45,31 +45,44 @@ ERRS: {
     my $mock = Test::MockModule->new($CLASS);
     my @args;
     $mock->mock(pod2usage => sub { @args = @_} );
-    local @ARGV = ();
+    local @ARGV = ($mod_root);
     ok $CLASS->_config, 'configure with no options';
     is_deeply \@args, [
         $CLASS,
         '-message', 'Missing required --doc-root and --base-uri options',
     ], 'Should have been helped';
 
-    @ARGV = ('--doc-root', $doc_root);
+    @ARGV = ('--doc-root', $doc_root, $mod_root);
     ok $CLASS->_config, 'configure with no --base_uri';
     is_deeply \@args, [
         $CLASS,
         '-message', 'Missing required --base-uri option',
     ], 'Should have been helped again';
 
-    @ARGV = ('--base-uri', $base_uri);
+    @ARGV = ('--base-uri', $base_uri, $mod_root);
     ok $CLASS->_config, 'configure with no --base_uri';
     is_deeply \@args, [
         $CLASS,
         '-message', 'Missing required --doc-root option',
     ], 'Should have been helped again';
+
+    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri);
+    ok $CLASS->_config, 'configure with no module root';
+    is_deeply \@args, [
+        $CLASS,
+        '-message', 'Missing path to module root',
+    ], 'Should have been helped again';
 }
 
-MULTIPLE_BASE_URIS: {
-    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, '--base-uri', '/whatever' );
+MULTIPLES: {
+    local @ARGV = (
+        '--doc-root' => $doc_root,
+        '--base-uri' => $base_uri,
+        '--base-uri' => '/whatever',
+        $mod_root, '/another/root'
+    );
     local $config{base_uri} = [ $base_uri, '/whatever/' ];
+    local $config{module_roots} = [ $mod_root, '/another/root' ];
     is_deeply $CLASS->_config, \%config, 'Allow multiple --base-uri';
 }
 
@@ -77,18 +90,18 @@ HELP: {
     my $mock = Test::MockModule->new($CLASS);
     my @args;
     $mock->mock(pod2usage => sub { @args = @_} );
-    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, '--help' );
+    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '--help' );
     ok $CLASS->_config, 'Ask for help';
     is_deeply \@args, [ $CLASS, '-exitval', 0 ], 'Should have been helped';
-    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, '-h' );
+    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '-h' );
     ok $CLASS->_config, 'Ask for help short';
     is_deeply \@args, [ $CLASS, '-exitval', 0 ], 'Should have been helped again';
 
-    local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, '--man' );
+    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '--man' );
     ok $CLASS->_config, 'Ask for man';
     is_deeply \@args, [ $CLASS, '-sections', '.+', '-exitval', 0 ],
         'Should have been manned';
-    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, '-m' );
+    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '-m' );
     ok $CLASS->_config, 'Ask for man short';
     is_deeply \@args, [ $CLASS, '-sections', '.+', '-exitval', 0 ],
         'Should have been manned again';
@@ -104,12 +117,14 @@ LOTS: {
         '--index-file'    => 'default.htm',
         '--css-path'      => '/some/file.css',
         '--js-path'       => '/some/file.js',
-        '--verbose', '--verbose', '--verbose'
+        '--verbose', '--verbose', '--verbose',
+        $mod_root,
     );
 
     is_deeply $CLASS->_config, {
         doc_root      => $doc_root,
         base_uri      => [$base_uri],
+        module_roots  => [$mod_root],
         verbose       => 3,
         version       => undef,
         css_path      => '/some/file.css',
@@ -134,12 +149,14 @@ SHORT: {
         '-f' => 'default.htm',
         '-c' => '/some/file.css',
         '-j' => '/some/file.js',
-        '-VVV'
+        '-VVV',
+        $mod_root,
     );
 
     is_deeply $CLASS->_config, {
         doc_root      => $doc_root,
         base_uri      => [$base_uri],
+        module_roots  => [$mod_root],
         verbose       => 3,
         version       => undef,
         css_path      => '/some/file.css',

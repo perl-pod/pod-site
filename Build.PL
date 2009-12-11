@@ -23,6 +23,8 @@ my $build = Module::Build->new(
         'File::Spec'        => 0,
         'Getopt::Long'      => 0,
         'Module::Build'     => '0.34',
+        'Object::Tiny'      => 0,
+        'Parse::CPAN::Meta' => 0,
         'Pod::Simple'       => '3.09',
         'Pod::Usage'        => 0,
     },
