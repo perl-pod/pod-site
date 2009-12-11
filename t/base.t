@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 11;
+use Test::More tests => 16;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -18,6 +18,43 @@ my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
 
 END { remove_tree if -d $tmpdir }
+
+can_ok $CLASS, qw(
+    doc_root
+    base_uri
+    module_roots
+    index_file
+    css_path
+    js_path
+    verbose
+
+    run
+    new
+    build
+    start_nav
+    start_toc
+    output
+    output_bin
+    finish_nav
+    finish_toc
+    batch_html
+    get_desc
+    pod2usage
+);
+
+isa_ok 'Pod::Site::Search', 'Pod::Simple::Search';
+can_ok 'Pod::Site::Search', qw(
+    instance
+    new
+);
+
+isa_ok 'Pod::Site::XHTML', 'Pod::Simple::XHTML';
+can_ok 'Pod::Site::XHTML', qw(
+    new
+    start_L
+    html_header
+    batch_mode_page_object_init
+);
 
 eval { $CLASS->new };
 ok my $err = $@, 'Should catch exception';

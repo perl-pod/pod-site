@@ -10,7 +10,7 @@ my $build = Module::Build->new(
     },
     build_requires     => {
         'Module::Build'    => '0.34',
-        'Test::More'       => '0.17',
+        'Test::More'       => '0.88',
         'Test::MockModule' => '0.05',
     },
     requires           => {

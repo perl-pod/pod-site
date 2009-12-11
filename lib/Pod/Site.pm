@@ -9,6 +9,10 @@ use Object::Tiny qw(
     module_roots
     doc_root
     base_uri
+    index_file
+    css_path
+    js_path
+    verbose
 );
 
 use vars '$VERSION';
@@ -65,12 +69,12 @@ sub build {
 
     # Make it so!
     $self->_find_version;
-    $self->start_browser($idx_fh);
+    $self->start_nav($idx_fh);
     $self->start_toc($toc_fh);
     $self->output($idx_fh);
     $self->output_bin($idx_fh);
-    $self->end_browser($idx_fh);
-    $self->end_toc($toc_fh);
+    $self->finish_nav($idx_fh);
+    $self->finish_toc($toc_fh);
     $self->copy_etc();
 
     # Close up shop.
@@ -80,7 +84,7 @@ sub build {
     $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
 }
 
-sub start_browser {
+sub start_nav {
     my ($self, $fh) = @_;
     my $version = Pod::Site->VERSION;
     print "Starting site navigation file\n" if $self->{verbose} > 1;
@@ -221,7 +225,7 @@ sub output_bin {
       $self->{base_space}, $self->{spacer} x --$self->{indent}, "</li>\n";
 }
 
-sub end_browser {
+sub finish_nav {
     my ($self, $fh) = @_;
     print "Finishing browser navigation file\n" if $self->{verbose} > 1;
     print $fh _udent( <<"    EOF" );
@@ -233,7 +237,7 @@ sub end_browser {
     EOF
 }
 
-sub end_toc {
+sub finish_toc {
     my ($self, $fh) = @_;
     print "Finishing browser TOC file\n" if $self->{verbose} > 1;
     print $fh _udent( <<"    EOF" );
