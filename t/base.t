@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 16;
+use Test::More tests => 22;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -12,7 +12,7 @@ BEGIN {
     use_ok $CLASS or die;
 }
 
-my $mod_root = catdir qw(t lib);
+my $mod_root = catdir qw(t dists);
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
@@ -27,10 +27,13 @@ can_ok $CLASS, qw(
     css_path
     js_path
     verbose
+    distros
+    title
 
     run
     new
     build
+    find_distros
     start_nav
     start_toc
     output
@@ -67,17 +70,27 @@ isa_ok my $ps = $CLASS->new({
     module_roots => $mod_root,
 }), $CLASS, 'new object';
 
+is $ps->index_file, 'index.html', 'Should have defautl index file';
+is $ps->verbose, 0, 'Should have default verbosity';
+is $ps->js_path, '', 'Should have default js_path';
+is $ps->css_path, '', 'Should have default css_path';
+
 is_deeply $ps->module_roots, [$mod_root],
     'module_roots should be converted to an array';
+is_deeply $ps->base_uri, [$base_uri],
+    'base_uri should be converted to an array';
 
 isa_ok $ps = $CLASS->new({
     doc_root     => $doc_root,
     base_uri     => $base_uri,
     module_roots => [$mod_root],
+    base_uri     => [$base_uri],
 }), $CLASS, 'another object';
 
 is_deeply $ps->module_roots, [$mod_root],
     'module_roots array should be retained';
+is_deeply $ps->base_uri, [$base_uri],
+    'base_uri array should be retained';
 
 my $path = "$$-" . __FILE__ . time;
 eval { $CLASS->new({

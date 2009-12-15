@@ -10,8 +10,10 @@ my $build = Module::Build->new(
     },
     build_requires     => {
         'Module::Build'    => '0.34',
+        'Test::File'       => 0,
         'Test::More'       => '0.88',
         'Test::MockModule' => '0.05',
+        'Test::XPath'      => '0.12',
     },
     requires           => {
         'perl'              => 5.006_002,
@@ -22,6 +24,7 @@ my $build = Module::Build->new(
         'File::Slurp::Tree' => 0,
         'File::Spec'        => 0,
         'Getopt::Long'      => 0,
+        'HTML::Entities'    => 0,
         'Module::Build'     => '0.34',
         'Object::Tiny'      => 0,
         'Parse::CPAN::Meta' => 0,

@@ -5,6 +5,7 @@ use warnings;
 use File::Spec;
 use Carp;
 use Pod::Simple '3.08';
+use HTML::Entities;
 use Object::Tiny qw(
     module_roots
     doc_root
@@ -13,6 +14,8 @@ use Object::Tiny qw(
     css_path
     js_path
     verbose
+    distros
+    title
 );
 
 use vars '$VERSION';
@@ -25,7 +28,13 @@ sub run {
 
 sub new {
     my ( $class, $params ) = @_;
-    my $self = bless { %{ $params || {} } } => $class;
+    my $self = bless {
+        index_file => 'index.html',
+        verbose    => 0,
+        js_path    => '',
+        css_path   => '',
+        %{ $params || {} }
+    } => $class;
 
     if (my @missing = grep { !$self->{$_} } qw(doc_root base_uri module_roots)) {
         my $pl = @missing > 1 ? 's' : '';
@@ -42,6 +51,7 @@ sub new {
         croak "The module root $path is not a directory\n" unless -d $path;
     }
 
+    $self->{base_uri} = [$self->{base_uri}] unless ref $self->{base_uri};
     return $self;
 }
 
@@ -51,7 +61,7 @@ sub build {
     File::Path::mkpath($self->{doc_root}, 0, 0755);
 
     # The index file is the home page.
-    my $idx_file = File::Spec->catfile( @{ $self }{qw(doc_root index_file)} );
+    my $idx_file = File::Spec->catfile( $self->doc_root, $self->index_file );
     open my $idx_fh, '>', $idx_file or die qq{Cannot open "$idx_file": $!\n};
 
     # The TOC file has the table of contents for all modules and programs in
@@ -67,43 +77,79 @@ sub build {
     $self->{spacer} = '  ';
     $self->{uri} = '';
 
+
     # Make it so!
-    $self->_find_version;
+    $self->find_distros;
     $self->start_nav($idx_fh);
-    $self->start_toc($toc_fh);
-    $self->output($idx_fh);
-    $self->output_bin($idx_fh);
+    # $self->start_toc($toc_fh);
+    # $self->output($idx_fh);
+    # $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
-    $self->finish_toc($toc_fh);
-    $self->copy_etc();
+    # $self->finish_toc($toc_fh);
+    # $self->copy_etc();
 
     # Close up shop.
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};
     close $toc_fh or die qq{Could not close "$toc_file": $!\n};
 
-    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
+#    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
+}
+
+sub find_distros {
+    my $self = shift;
+    require File::Find::Rule;
+    require Parse::CPAN::Meta;
+    require File::Basename;
+    my @distros;
+    print STDERR "Searching for distributions\n" if $self->verbose;
+    for my $meta (File::Find::Rule->file->name(
+        qr/META[.](?:ya?ml|jso?n)/
+    )->in(@{ $self->module_roots }) ) {
+        my $data = Parse::CPAN::Meta::LoadFile( $meta );
+        $data->{_dir} = (File::Basename::fileparse($meta))[1];
+        print STDERR "Found $data->{_dir}\n" if $self->verbose > 1;
+        push @distros, $data;
+    };
+
+    die "No distributions found in " . join(', ', $self->module_roots) . "\n"
+        unless @distros;
+
+    $self->{distros} = [ sort { $a->{name} cmp $b->{name} } @distros ];
 }
 
 sub start_nav {
     my ($self, $fh) = @_;
-    my $version = Pod::Site->VERSION;
-    print "Starting site navigation file\n" if $self->{verbose} > 1;
-    my $base = join "\n        ", map { qq{<meta name="base-uri" content="$_" />} } @{ $self->{base_uri} };
+    my $class = ref $self;
+    my $version = __PACKAGE__->VERSION;
+    print STDERR "Starting site navigation file\n" if $self->verbose > 1;
+    my $base = join "\n        ", map {
+        qq{<meta name="base-uri" content="$_" />}
+    } @{ $self->{base_uri} };
+
+    my $title = encode_entities $self->title || do {
+        my $distros = $self->distros;
+        if (@{$distros} == 1) {
+            "$distros->[0]{name} $distros->[0]{version}";
+        } else {
+            'API Browser';
+        }
+    };
+
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>$self->{module_name} $self->{version} API Browser</title>
+        <title>${title}</title>
         <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
         $base
         <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
-        <meta name="generator" content="Pod::Site $version" />
+        <meta name="generator" content="$class $version" />
       </head>
       <body>
         <div id="nav">
-          <h3>$self->{module_name} $self->{version}</h3>
+          <h3>$title</h3>
           <ul id="tree">
             <li id="toc"><a href="toc.html">TOC</a></li>
     EOF
@@ -115,7 +161,7 @@ sub start_toc {
     my $module_as_path = join '/', split /::/, $self->{sample_module};
     my $version = Pod::Site->VERSION;
 
-    print "Starting browser TOC file\n" if $self->{verbose} > 1;
+    print STDERR "Starting browser TOC file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF");
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -161,7 +207,7 @@ sub output {
         my $contents = $tree->{$key};
         (my $fn = $key) =~ s/\.[^.]+$//;
         my $class = join ('::', split('/', $self->{uri}), $fn);
-        print "Reading $class\n" if $self->{verbose} > 1;
+        print STDERR "Reading $class\n" if $self->verbose > 1;
         if (ref $contents) {
             # It's a directory tree. Output a class for it, first, if there
             # is one.
@@ -176,7 +222,7 @@ sub output {
             }
 
             # Now recursively descend the tree.
-            print "Outputting nav link\n" if $self->{verbose} > 2;
+            print STDERR "Outputting nav link\n" if $self->verbose > 2;
             print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
               qq{<li id="$class">$item\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
             ++$self->{indent};
@@ -206,17 +252,17 @@ sub output_bin {
     for my $pl (sort keys %$tree) {
         # Skip directories.
         next if ref $tree->{$pl};
-        print "Reading $pl\n" if $self->{verbose} > 1;
+        print "STDERR Reading $pl\n" if $self->verbose > 1;
         # Get the description.
         my $desc = $self->get_desc($pl, \$tree->{$pl}, $pl) or next;
 
         # Output the Tree Browser Link.
-        print "Outputting $pl nav link\n" if $self->{verbose} > 2;
+        print STDERR "Outputting $pl nav link\n" if $self->verbose > 2;
         print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
           qq{<li id="$pl"><a href="$pl.html">$pl</a></li>\n};
 
         # Output the TOC link.
-        print "Outputting toc link\n" if $self->{verbose} > 2;
+        print STDERR "Outputting toc link\n" if $self->verbose > 2;
         print {$self->{toc_fh}} $self->{base_space},
           qq{  <li><a href="$pl.html" rel="section" name="$pl">$pl</a>&#x2014;$desc</li>\n};
     }
@@ -227,7 +273,7 @@ sub output_bin {
 
 sub finish_nav {
     my ($self, $fh) = @_;
-    print "Finishing browser navigation file\n" if $self->{verbose} > 1;
+    print STDERR "Finishing browser navigation file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF" );
           </ul>
         </div>
@@ -239,7 +285,7 @@ sub finish_nav {
 
 sub finish_toc {
     my ($self, $fh) = @_;
-    print "Finishing browser TOC file\n" if $self->{verbose} > 1;
+    print STDERR "finishing browser TOC file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF" );
         </ul>
       </body>
@@ -250,7 +296,7 @@ sub finish_toc {
 sub batch_html {
     my $self = shift;
     require Pod::Simple::HTMLBatch;
-    print "Creating HTML with Pod::Simple::XHTML\n" if $self->{verbose} > 1;
+    print STDERR "Creating HTML with Pod::Simple::XHTML\n" if $self->verbose > 1;
     # XXX I'd rather have a way to get this passed to the P::S::XHTML object.
     local $Pod::Site::_instance = $self;
     my $batchconv = Pod::Simple::HTMLBatch->new;
@@ -353,10 +399,9 @@ sub _config {
     );
 
     Getopt::Long::GetOptions(
-        'module-name|n=s'   => \$opts{module_name},
+        'title|t=s'         => \$opts{title},
         'doc-root|d=s'      => \$opts{doc_root},
         'base-uri|b=s@'     => \$opts{base_uri},
-        'version-in|i=s'    => \$opts{version_in},
         'sample-module|e=s' => \$opts{sample_module},
         'index-file|f=s'    => \$opts{index_file},
         'css-path|c=s'      => \$opts{css_path},

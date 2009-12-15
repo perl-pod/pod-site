@@ -21,6 +21,7 @@ my $base_uri = '/docs/';
 END { remove_tree if -d $tmpdir }
 
 my %config = (
+    title         => undef,
     doc_root      => $doc_root,
     base_uri      => [$base_uri],
     module_roots  => [$mod_root],
@@ -30,10 +31,8 @@ my %config = (
     js_path       => '',
     index_file    => 'index.html',
     sample_module => undef,
-    version_in    => undef,
     man           => undef,
     help          => undef,
-    module_name   => undef,
 );
 
 DEFAULTS: {
@@ -111,12 +110,11 @@ LOTS: {
     local @ARGV = (
         '--doc-root'      => $doc_root,
         '--base-uri'      => $base_uri,
-        '--module-name'   => 'Hello',
-        '--version-in'    => 'lib/Hi.pm',
         '--sample-module' => 'lib/Hello.pm',
         '--index-file'    => 'default.htm',
         '--css-path'      => '/some/file.css',
         '--js-path'       => '/some/file.js',
+        '--title'         => 'Eat me',
         '--verbose', '--verbose', '--verbose',
         $mod_root,
     );
@@ -131,10 +129,9 @@ LOTS: {
         js_path       => '/some/file.js',
         index_file    => 'default.htm',
         sample_module => 'lib/Hello.pm',
-        version_in    => 'lib/Hi.pm',
+        title         => 'Eat me',
         man           => undef,
         help          => undef,
-        module_name   => 'Hello',
     }, 'Lots of opts should work';
 
 }
@@ -143,12 +140,11 @@ SHORT: {
     local @ARGV = (
         '-d' => $doc_root,
         '-b' => $base_uri,
-        '-n' => 'Hello',
-        '-i' => 'lib/Hi.pm',
         '-e' => 'lib/Hello.pm',
         '-f' => 'default.htm',
         '-c' => '/some/file.css',
         '-j' => '/some/file.js',
+        '-t' => 'Eat me',
         '-VVV',
         $mod_root,
     );
@@ -163,10 +159,9 @@ SHORT: {
         js_path       => '/some/file.js',
         index_file    => 'default.htm',
         sample_module => 'lib/Hello.pm',
-        version_in    => 'lib/Hi.pm',
+        title         => 'Eat me',
         man           => undef,
         help          => undef,
-        module_name   => 'Hello',
     }, 'Lots of short opts should work';
 
 }
