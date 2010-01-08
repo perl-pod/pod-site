@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 
 use strict;
-#use Test::More tests => 16;
-use Test::More 'no_plan';
+use Test::More tests => 21;
+#use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
 use Test::File;
@@ -28,15 +28,8 @@ ok my $ps = Pod::Site->new({
 }), 'Create Pod::Site object';
 
 file_not_exists_ok $doc_root, 'Doc root should not yet exist';
-ok !$ps->distros, 'Should have no distro data';
 ok $ps->build, 'Build the site';
 file_exists_ok $doc_root, 'Doc root should now exist';
-ok $ps->distros, 'Should have distro data';
-is @{ $ps->distros }, 2, 'Should have found 2 distros';
-is $ps->distros->[0]{name}, 'Foo-Bar', 'First distro should be Foo-Bar';
-is $ps->distros->[0]{version}, '0.01', 'First distro version should be 0.01';
-is $ps->distros->[1]{name}, 'Hello', 'Second distro should be Hello';
-is $ps->distros->[1]{version}, '0.42', 'Second distro version should be 0.42';
 
 ok my $tx = Test::XPath->new(
     file => catfile($doc_root, 'index.html'),

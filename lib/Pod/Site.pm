@@ -14,7 +14,6 @@ use Object::Tiny qw(
     css_path
     js_path
     verbose
-    distros
     title
 );
 
@@ -79,7 +78,6 @@ sub build {
 
 
     # Make it so!
-    $self->find_distros;
     $self->start_nav($idx_fh);
     # $self->start_toc($toc_fh);
     # $self->output($idx_fh);
@@ -95,28 +93,6 @@ sub build {
 #    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
 }
 
-sub find_distros {
-    my $self = shift;
-    require File::Find::Rule;
-    require Parse::CPAN::Meta;
-    require File::Basename;
-    my @distros;
-    print STDERR "Searching for distributions\n" if $self->verbose;
-    for my $meta (File::Find::Rule->file->name(
-        qr/META[.](?:ya?ml|jso?n)/
-    )->in(@{ $self->module_roots }) ) {
-        my $data = Parse::CPAN::Meta::LoadFile( $meta );
-        $data->{_dir} = (File::Basename::fileparse($meta))[1];
-        print STDERR "Found $data->{_dir}\n" if $self->verbose > 1;
-        push @distros, $data;
-    };
-
-    die "No distributions found in " . join(', ', $self->module_roots) . "\n"
-        unless @distros;
-
-    $self->{distros} = [ sort { $a->{name} cmp $b->{name} } @distros ];
-}
-
 sub start_nav {
     my ($self, $fh) = @_;
     my $class = ref $self;
@@ -126,14 +102,7 @@ sub start_nav {
         qq{<meta name="base-uri" content="$_" />}
     } @{ $self->{base_uri} };
 
-    my $title = encode_entities $self->title || do {
-        my $distros = $self->distros;
-        if (@{$distros} == 1) {
-            "$distros->[0]{name} $distros->[0]{version}";
-        } else {
-            'API Browser';
-        }
-    };
+    my $title = encode_entities $self->title || 'API Browser';
 
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
@@ -141,7 +110,7 @@ sub start_nav {
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>${title}</title>
+        <title>$title</title>
         <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
         $base
         <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
@@ -365,24 +334,6 @@ sub _create_tree {
     )->not_name( qr/blib/ );
 
     return File::Slurp::Tree::slurp_tree($self->{lib}, rule => $rule);
-}
-
-sub _find_version {
-    my $self = shift;
-    my $mod = $self->{version_in} || $self->{module_name};
-    require Module::Build::ModuleInfo;
-    my $info = $mod =~ m{/}
-        ? Module::Build::ModuleInfo->new_from_file( $mod )
-        : Module::Build::ModuleInfo->new_from_module(
-            $mod, inc => [ @{ $self }{qw(lib bin)} ]
-        );
-
-    # If we can't find this, nothing will work.
-    die "Could not find $mod\n" unless $info;
-
-    $self->{version} = $info->version || '0';
-    print "No version information found\n" if !$self->{version} && $self->{verbose};
-    return $self->{version};
 }
 
 sub _config {

@@ -27,13 +27,11 @@ can_ok $CLASS, qw(
     css_path
     js_path
     verbose
-    distros
     title
 
     run
     new
     build
-    find_distros
     start_nav
     start_toc
     output
