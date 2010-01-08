@@ -12,7 +12,7 @@ BEGIN {
     use_ok $CLASS or die;
 }
 
-my $mod_root = catdir qw(t dists);
+my $mod_root = catdir qw(t lib);
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
@@ -40,6 +40,8 @@ can_ok $CLASS, qw(
     finish_toc
     batch_html
     get_desc
+    module_tree
+    sample_module
     pod2usage
 );
 

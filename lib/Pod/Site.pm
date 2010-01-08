@@ -6,6 +6,8 @@ use File::Spec;
 use Carp;
 use Pod::Simple '3.08';
 use HTML::Entities;
+use File::Find::Rule;
+use File::Slurp::Tree;
 use Object::Tiny qw(
     module_roots
     doc_root
@@ -93,16 +95,21 @@ sub build {
 #    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
 }
 
+sub _encoded_title {
+    encode_entities shift->title || 'API Browser';
+}
+
 sub start_nav {
     my ($self, $fh) = @_;
-    my $class = ref $self;
+    my $class   = ref $self;
     my $version = __PACKAGE__->VERSION;
+    my $title   = $self->_encoded_title;
+
     print STDERR "Starting site navigation file\n" if $self->verbose > 1;
     my $base = join "\n        ", map {
         qq{<meta name="base-uri" content="$_" />}
     } @{ $self->{base_uri} };
 
-    my $title = encode_entities $self->title || 'API Browser';
 
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
@@ -127,8 +134,9 @@ sub start_nav {
 sub start_toc {
     my ($self, $fh) = @_;
 
-    my $module_as_path = join '/', split /::/, $self->{sample_module};
+    my $sample  = encode_entities $self->sample_module;
     my $version = Pod::Site->VERSION;
+    my $title   = $self->_encoded_title;
 
     print STDERR "Starting browser TOC file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF");
@@ -137,29 +145,23 @@ sub start_toc {
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>$self->{module_name} $self->{version} API Browser</title>
+        <title>$title</title>
         <meta name="generator" content="Pod::Site $version" />
       </head>
 
       <body>
-        <h1>$self->{module_name} $self->{version} API Browser</h1>
+        <h1>$title</h1>
         <h1>Instructions</h1>
 
         <p>Select class names from the navigation tree to the left. The tree
-           is hierarchical and will show all of the classes in $self->{module_name}. The
-           triangles indicate those that have subclasses, while the diamond icon
-           represents classes without subclasses.</p>
-
-        <p>You can access the API browser at any time at this URL. But you can
-           also link to a particular $self->{module_name} class, and the browser will
-           load that class, with the navigation open to and highlighting the
-           class. You can use a few different ways of linking to a specific
-           class. For example, if you wanted to access $self->{sample_module},
-           any of these links will work:</p>
+           shows a hierarchical list of modules and programs. In addition to
+           this URL, you can link directly to the page for a particular module
+           or program. For example, if you wanted to access
+           $sample, any of these links will work:</p>
 
         <ul>
-          <li><a href="./?$self->{sample_module}">/?$self->{sample_module}</a></li>
-          <li><a href="./$self->{sample_module}">/$self->{sample_module}</a></li>
+          <li><a href="./?$sample">/?$sample</a></li>
+          <li><a href="./$sample">/$sample</a></li>
         </ul>
 
         <p>Happy Hacking!</p>
@@ -171,7 +173,7 @@ sub start_toc {
 
 sub output {
     my ($self, $fh, $tree) = @_;
-    $tree ||= $self->_create_tree;
+    $tree ||= $self->module_tree;
     for my $key (sort keys %$tree) {
         my $contents = $tree->{$key};
         (my $fn = $key) =~ s/\.[^.]+$//;
@@ -323,17 +325,55 @@ sub get_desc {
     return $desc;
 }
 
-sub _create_tree {
+sub module_tree {
     my $self = shift;
-    # We're gonna use these.
-    require File::Find::Rule;
-    require File::Slurp::Tree;
+    return $self->{module_tree} if $self->{module_tree};
 
-    my $rule = File::Find::Rule->file->name(
-        qr/\.pm$/, qr/\.pod$/
-    )->not_name( qr/blib/ );
+    my $tree = $self->{module_tree} = {};
+    my $rule = File::Find::Rule->file->name(qr/\.p(?:m|od)$/);
 
-    return File::Slurp::Tree::slurp_tree($self->{lib}, rule => $rule);
+    for my $lib (@{ $self->module_roots }) {
+        (my $top = $lib) =~ s{/$}{};
+        for my $file ( $rule->in( $lib ) ) {
+            next if $file eq $top;
+            (my $rel = $file) =~ s{^\Q$top\E/}{};
+            next unless $rel; # it's /
+
+            my @elems = split m{/}, $rel;
+
+            # go to the top of the tree
+            my $node = $tree;
+            # and walk along the path
+            while (my $elem = shift @elems) {
+                # on the path || a dir
+                if (@elems || -d $file) {
+                    $node = $node->{ $elem } ||= {};
+                }
+                else {
+                # a file, remember it.
+                    $node->{ $elem } ||= $file;
+                }
+            }
+        }
+    }
+
+    return $tree;
+}
+
+sub sample_module {
+    my $self = shift;
+    $self->{sample_module} ||= $self->_find_sample($self->module_tree);
+}
+
+sub _find_sample {
+    my ($self, $tree) = @_;
+    for my $key ( sort keys %{ $tree }) {
+        if ($key =~ s/[.]p(?:m|od)$//) {
+            return $key;
+        } elsif (my $mod = $self->_find_sample($tree->{$key})) {
+            return $key . "::$mod";
+        }
+    }
 }
 
 sub _config {

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 21;
+use Test::More tests => 23;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
@@ -14,7 +14,7 @@ BEGIN {
     use_ok $CLASS or die;
 }
 
-my $mod_root = catdir qw(t dists);
+my $mod_root = catdir qw(t lib);
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
@@ -30,6 +30,24 @@ ok my $ps = Pod::Site->new({
 file_not_exists_ok $doc_root, 'Doc root should not yet exist';
 ok $ps->build, 'Build the site';
 file_exists_ok $doc_root, 'Doc root should now exist';
+is_deeply $ps->module_tree, {
+    'Heya' => {
+        'Man' => {
+            'What.pm' => catfile qw(t lib Heya Man What.pm)
+        },
+        'Man.pm' => catfile qw(t lib Heya Man.pm)
+    },
+    'Heya.pm' => catfile( qw(t lib Heya.pm)),
+    'Foo' => {
+        'Bar' => {
+            'Baz.pm' => catfile(qw(t lib Foo Bar Baz.pm))
+        },
+        'Shizzle.pm' => catfile(qw(t lib Foo Shizzle.pm)),
+        'Bar.pm' => catfile qw(t lib Foo Bar.pm)
+    },
+    'Hello.pm' => catfile qw(t lib Hello.pm)
+}, 'Should have a module tree';
+is $ps->sample_module, 'Foo::Bar::Baz', 'Should have a sample module';
 
 ok my $tx = Test::XPath->new(
     file => catfile($doc_root, 'index.html'),
