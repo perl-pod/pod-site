@@ -78,14 +78,13 @@ sub build {
     $self->{spacer} = '  ';
     $self->{uri} = '';
 
-
     # Make it so!
     $self->start_nav($idx_fh);
-    # $self->start_toc($toc_fh);
+    $self->start_toc($toc_fh);
     # $self->output($idx_fh);
     # $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
-    # $self->finish_toc($toc_fh);
+    $self->finish_toc($toc_fh);
     # $self->copy_etc();
 
     # Close up shop.
@@ -144,7 +143,7 @@ sub start_toc {
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
       <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <title>$title</title>
         <meta name="generator" content="Pod::Site $version" />
       </head>
