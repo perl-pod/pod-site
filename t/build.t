@@ -25,6 +25,7 @@ ok my $ps = Pod::Site->new({
     doc_root     => $doc_root,
     base_uri     => $base_uri,
     module_roots => $mod_root,
+    label        => 'API Browser',
 }), 'Create Pod::Site object';
 
 file_not_exists_ok $doc_root, 'Doc root should not yet exist';
@@ -54,7 +55,7 @@ is $ps->title,         'Foo::Bar::Baz', 'Should have default title';
 ##############################################################################
 # Validate the index page.
 ok my $tx = Test::XPath->new(
-    file => catfile($doc_root, 'index.html'),
+    file    => catfile($doc_root, 'index.html'),
     is_html => 1
 ), 'Load index.html';
 
@@ -73,7 +74,7 @@ $tx->is(
 );
 $tx->is(
     '/html/head/title',
-    'Foo::Bar::Baz',
+    $ps->main_title,
     'Title should be corect'
 );
 $tx->is(
@@ -100,7 +101,7 @@ $tx->is(
 # Check the body element.
 $tx->is( 'count(/html/body/div)', 2, 'Should have 2 top-level divs' );
 $tx->ok( '/html/body/div[@id="nav"]', sub {
-    $_->is('./h3', 'Foo::Bar::Baz', 'Should have title header');
+    $_->is('./h3', $ps->nav_header, 'Should have title header');
     $_->ok('./ul[@id="tree"]', sub {
         $_->ok('./li[@id="toc"]', sub {
             $_->is('./a[@href="toc.html"]', 'TOC', 'Should have TOC item');
@@ -132,7 +133,7 @@ $tx->is(
     'Should have the content-type set in a meta header',
 );
 
-$tx->is( '/html/head/title', $ps->title, 'Title should be corect');
+$tx->is( '/html/head/title', $ps->main_title, 'Title should be corect');
 
 $tx->is(
     '/html/head/meta[@name="generator"]/@content',
@@ -146,7 +147,7 @@ $tx->is( 'count(/html/body/*)', 7, 'Should have 7 elements in body' );
 # Headers.
 $tx->is( 'count(/html/body/h1)', 2, 'Should have 2 h1 elements in body' );
 
-$tx->is( '/html/body/h1[1]', $ps->title, 'Should have title in first h1 header');
+$tx->is( '/html/body/h1[1]', $ps->main_title, 'Should have title in first h1 header');
 $tx->is(
     '/html/body/h1[2]', 'Instructions',
     'Should have "Instructions" in second h1 header'

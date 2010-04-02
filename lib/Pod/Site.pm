@@ -17,6 +17,7 @@ use Object::Tiny qw(
     css_path
     js_path
     versioned_title
+    label
     verbose
 );
 
@@ -94,15 +95,12 @@ sub build {
 #    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
 }
 
-sub _encoded_title {
-    encode_entities shift->title || 'API Browser';
-}
-
 sub start_nav {
     my ($self, $fh) = @_;
     my $class   = ref $self;
     my $version = __PACKAGE__->VERSION;
-    my $title   = $self->_encoded_title;
+    my $title   = encode_entities $self->main_title;
+    my $head    = encode_entities $self->nav_header;
 
     print STDERR "Starting site navigation file\n" if $self->verbose > 1;
     my $base = join "\n        ", map {
@@ -124,7 +122,7 @@ sub start_nav {
       </head>
       <body>
         <div id="nav">
-          <h3>$title</h3>
+          <h3>$head</h3>
           <ul id="tree">
             <li id="toc"><a href="toc.html">TOC</a></li>
     EOF
@@ -135,7 +133,7 @@ sub start_toc {
 
     my $sample  = encode_entities $self->sample_module;
     my $version = Pod::Site->VERSION;
-    my $title   = $self->_encoded_title;
+    my $title   = encode_entities $self->main_title;
 
     print STDERR "Starting browser TOC file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF");
@@ -374,6 +372,17 @@ sub title {
     $self->{title} ||= $self->_find_title;
 }
 
+sub main_title {
+    my $self = shift;
+    return $self->label
+        ? $self->title . ' ' . $self->label
+        : $self->title;
+}
+
+sub nav_header {
+    shift->title;
+}
+
 sub _find_module {
     my ($self, $tree) = @_;
     for my $key ( sort keys %{ $tree }) {
@@ -428,6 +437,7 @@ sub _config {
         'sample-module|s=s'  => \$opts{sample_module},
         'main-module|m=s'    => \$opts{main_module},
         'versioned-title|n!' => \$opts{versioned_title},
+        'label|l=s'          => \$opts{label},
         'index-file|i=s'     => \$opts{index_file},
         'css-path|c=s'       => \$opts{css_path},
         'js-path|j=s'        => \$opts{js_path},
