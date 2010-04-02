@@ -31,6 +31,7 @@ my %config = (
     js_path       => '',
     index_file    => 'index.html',
     sample_module => undef,
+    main_module   => undef,
     man           => undef,
     help          => undef,
 );
@@ -100,7 +101,7 @@ HELP: {
     ok $CLASS->_config, 'Ask for man';
     is_deeply \@args, [ $CLASS, '-sections', '.+', '-exitval', 0 ],
         'Should have been manned';
-    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '-m' );
+    @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '-M' );
     ok $CLASS->_config, 'Ask for man short';
     is_deeply \@args, [ $CLASS, '-sections', '.+', '-exitval', 0 ],
         'Should have been manned again';
@@ -111,6 +112,7 @@ LOTS: {
         '--doc-root'      => $doc_root,
         '--base-uri'      => $base_uri,
         '--sample-module' => 'lib/Hello.pm',
+        '--main-module'   => 'lib/Bye.pm',
         '--index-file'    => 'default.htm',
         '--css-path'      => '/some/file.css',
         '--js-path'       => '/some/file.js',
@@ -129,6 +131,7 @@ LOTS: {
         js_path       => '/some/file.js',
         index_file    => 'default.htm',
         sample_module => 'lib/Hello.pm',
+        main_module   => 'lib/Bye.pm',
         title         => 'Eat me',
         man           => undef,
         help          => undef,
@@ -139,9 +142,10 @@ LOTS: {
 SHORT: {
     local @ARGV = (
         '-d' => $doc_root,
-        '-b' => $base_uri,
-        '-e' => 'lib/Hello.pm',
-        '-f' => 'default.htm',
+        '-u' => $base_uri,
+        '-s' => 'lib/Hello.pm',
+        '-m' => 'lib/Bye.pm',
+        '-i' => 'default.htm',
         '-c' => '/some/file.css',
         '-j' => '/some/file.js',
         '-t' => 'Eat me',
@@ -159,6 +163,7 @@ SHORT: {
         js_path       => '/some/file.js',
         index_file    => 'default.htm',
         sample_module => 'lib/Hello.pm',
+        main_module   => 'lib/Bye.pm',
         title         => 'Eat me',
         man           => undef,
         help          => undef,

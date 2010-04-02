@@ -31,3 +31,6 @@ the same terms as Perl itself.
 
 =cut
 
+package Foo::Bar::Baz;
+
+our $VERSION = '0.41';

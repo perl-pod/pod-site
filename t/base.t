@@ -41,6 +41,7 @@ can_ok $CLASS, qw(
     batch_html
     get_desc
     module_tree
+    main_module
     sample_module
     pod2usage
 );

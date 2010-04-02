@@ -6,6 +6,7 @@ use File::Spec;
 use Carp;
 use Pod::Simple '3.08';
 use HTML::Entities;
+use File::Path;
 use File::Find::Rule;
 use File::Slurp::Tree;
 use Object::Tiny qw(
@@ -16,7 +17,6 @@ use Object::Tiny qw(
     css_path
     js_path
     verbose
-    title
 );
 
 use vars '$VERSION';
@@ -46,7 +46,7 @@ sub new {
 
     my $roots = ref $self->{module_roots} eq 'ARRAY'
         ? $self->{module_roots}
-        :( $self->{module_roots} = [$self->{module_roots}] );
+        : ( $self->{module_roots} = [$self->{module_roots}] );
     for my $path (@{ $roots }) {
         croak "The module root $path does not exist\n" unless -e $path;
         croak "The module root $path is not a directory\n" unless -d $path;
@@ -58,7 +58,6 @@ sub new {
 
 sub build {
     my $self = shift;
-    require File::Path;
     File::Path::mkpath($self->{doc_root}, 0, 0755);
 
     # The index file is the home page.
@@ -362,18 +361,51 @@ sub module_tree {
 
 sub sample_module {
     my $self = shift;
-    $self->{sample_module} ||= $self->_find_sample($self->module_tree);
+    $self->{sample_module} ||= $self->main_module;
 }
 
-sub _find_sample {
+sub main_module {
+    my $self = shift;
+    $self->{main_module} ||= $self->_find_module($self->module_tree);
+}
+
+sub title {
+    my $self = shift;
+    $self->{title} ||= $self->_find_title;
+}
+
+sub _find_module {
     my ($self, $tree) = @_;
     for my $key ( sort keys %{ $tree }) {
         if ($key =~ s/[.]p(?:m|od)$//) {
             return $key;
-        } elsif (my $mod = $self->_find_sample($tree->{$key})) {
+        } elsif (my $mod = $self->_find_module($tree->{$key})) {
             return $key . "::$mod";
         }
     }
+}
+
+sub _main_module_file {
+    my $self = shift;
+    my $mod = $self->main_module;
+    return $mod if $mod =~ /[.]p(?:m|od)$/;
+    my @parts = split /::/, $mod;
+    my $last = pop @parts;
+    my $tree = $self->module_tree;
+    while (@parts) {
+        $tree = $tree->{shift @parts};
+    }
+    return $tree->{"$last.pm"} || $tree->{"$last.pod"};
+}
+
+sub _find_title {
+    my $self = shift;
+    require Module::Build::ModuleInfo;
+    my $mod_file = $self->_main_module_file;
+    my $info = Module::Build::ModuleInfo->new_from_file( $mod_file )
+        or die "Could not find $mod_file\n";
+
+    return $info->name . ' ' . $info->version;
 }
 
 sub _config {
@@ -392,14 +424,15 @@ sub _config {
     Getopt::Long::GetOptions(
         'title|t=s'         => \$opts{title},
         'doc-root|d=s'      => \$opts{doc_root},
-        'base-uri|b=s@'     => \$opts{base_uri},
-        'sample-module|e=s' => \$opts{sample_module},
-        'index-file|f=s'    => \$opts{index_file},
+        'base-uri|u=s@'     => \$opts{base_uri},
+        'sample-module|s=s' => \$opts{sample_module},
+        'main-module|m=s'   => \$opts{main_module},
+        'index-file|i=s'    => \$opts{index_file},
         'css-path|c=s'      => \$opts{css_path},
         'js-path|j=s'       => \$opts{js_path},
         'verbose|V+'        => \$opts{verbose},
         'help|h'            => \$opts{help},
-        'man|m'             => \$opts{man},
+        'man|M'             => \$opts{man},
         'version|v'         => \$opts{version},
     ) or $self->pod2usage;
 
@@ -444,7 +477,6 @@ sub _config {
 
     # Modify options and set defaults as appropriate.
     for (@{ $opts{base_uri} }) { $_ .= '/' unless m{/$}; }
-    $opts{sample_module} ||= $opts{module_name};
 
     return \%opts;
 }

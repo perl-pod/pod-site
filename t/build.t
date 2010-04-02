@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 23;
+use Test::More tests => 24;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
@@ -47,6 +47,7 @@ is_deeply $ps->module_tree, {
     },
     'Hello.pm' => catfile qw(t lib Hello.pm)
 }, 'Should have a module tree';
+is $ps->main_module,   'Foo::Bar::Baz', 'Should have a main module';
 is $ps->sample_module, 'Foo::Bar::Baz', 'Should have a sample module';
 
 ok my $tx = Test::XPath->new(
@@ -67,7 +68,7 @@ $tx->is(
 );
 $tx->is(
     '/html/head/title',
-    "API Browser",
+    'Foo::Bar::Baz 0.41',
     'Title should be corect'
 );
 $tx->is(
@@ -89,7 +90,7 @@ $tx->is(
 # Check the body element.
 $tx->is( 'count(/html/body/div)', 2, 'Should have 2 top-level divs' );
 $tx->ok( '/html/body/div[@id="nav"]', sub {
-    $_->is('./h3', 'API Browser', 'Should have title header');
+    $_->is('./h3', 'Foo::Bar::Baz 0.41', 'Should have title header');
     $_->ok('./ul[@id="tree"]', sub {
         $_->ok('./li[@id="toc"]', sub {
             $_->is('./a[@href="toc.html"]', 'TOC', 'Should have TOC item');
