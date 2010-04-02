@@ -82,7 +82,7 @@ sub build {
     # Make it so!
     $self->start_nav($idx_fh);
     $self->start_toc($toc_fh);
-    # $self->output($idx_fh);
+    $self->output($idx_fh);
     # $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
     $self->finish_toc($toc_fh);
@@ -171,20 +171,20 @@ sub start_toc {
 sub output {
     my ($self, $fh, $tree) = @_;
     $tree ||= $self->module_tree;
-    for my $key (sort keys %$tree) {
-        my $contents = $tree->{$key};
+    for my $key (sort keys %{ $tree }) {
+        my $data = $tree->{$key};
         (my $fn = $key) =~ s/\.[^.]+$//;
         my $class = join ('::', split('/', $self->{uri}), $fn);
         print STDERR "Reading $class\n" if $self->verbose > 1;
-        if (ref $contents) {
+        if (ref $data) {
             # It's a directory tree. Output a class for it, first, if there
             # is one.
             my $item = $key;
             if ($tree->{"$key.pm"}) {
-                my $code = \$tree->{"$key.pm"};
-                if (my $desc = $self->get_desc($class, $code, $self)) {
+                my $path = $tree->{"$key.pm"};
+                if (my $desc = $self->get_desc($class, $path, $self)) {
                     $item = qq{<a href="$self->{uri}$key.html">$key</a>};
-                    $self->_output_class($fh, $fn, $code, $class, 1, $desc);
+                    $self->_output_class($fh, $fn, $path, $class, 1, $desc);
                 }
                 $self->{seen}{$class} = 1;
             }
@@ -195,13 +195,13 @@ sub output {
               qq{<li id="$class">$item\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
             ++$self->{indent};
             $self->{uri} .= "$key/";
-            $self->output($fh, $contents);
+            $self->output($fh, $data);
             print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
               $self->{base_space}, $self->{spacer} x --$self->{indent}, "</li>\n";
             $self->{uri} =~ s|$key/$||;
         } else {
             # It's a class. Create a link to it.
-            $self->_output_class($fh, $fn, \$contents, $class) unless $self->{seen}{$class};
+            $self->_output_class($fh, $fn, $data, $class) unless $self->{seen}{$class};
         }
     }
 }
@@ -217,12 +217,12 @@ sub output_bin {
     my $rule = File::Find::Rule->file->executable;
     my $tree = File::Slurp::Tree::slurp_tree($self->{bin}, rule => $rule);
 
-    for my $pl (sort keys %$tree) {
+    for my $pl (sort keys %{ $tree }) {
         # Skip directories.
         next if ref $tree->{$pl};
         print "STDERR Reading $pl\n" if $self->verbose > 1;
         # Get the description.
-        my $desc = $self->get_desc($pl, \$tree->{$pl}, $pl) or next;
+        my $desc = $self->get_desc($pl, $tree->{$pl}, $pl) or next;
 
         # Output the Tree Browser Link.
         print STDERR "Outputting $pl nav link\n" if $self->verbose > 2;
@@ -297,9 +297,9 @@ sub _udent {
 }
 
 sub _output_class {
-    my ($self, $fh, $key, $contents, $class, $no_link, $desc) = @_;
+    my ($self, $fh, $key, $fn, $class, $no_link, $desc) = @_;
 
-    $desc ||= $self->get_desc($class, $contents, $class) or return;
+    $desc ||= $self->get_desc($class, $fn, $class) or return;
 
     # Output the Tree Browser Link.
     print "Outputting $class nav link\n" if $self->{verbose} > 2;
@@ -315,8 +315,22 @@ sub _output_class {
 }
 
 sub get_desc {
-    my ($self, $what, $contents) = @_;
-    my ($desc) = $$contents =~ /=head1 NAME\n\n$what\s+-\s+([^\n]+)\n/i;
+    my ($self, $what, $file) = @_;
+
+    open my $fh, '<', $file or die "Cannot open $file: $!\n";
+    my $desc;
+    while (<$fh>) {
+        next unless /^=head1 NAME$/i;
+        while (<$fh>) {
+            last if /^=\w+/;
+            next unless /\Q$what\E\s+-\s+([^\n]+)$/i;
+            $desc = $1;
+            last;
+        }
+        last;
+    }
+
+    close $fh or die "Cannot close $file: $!\n";
     print "$what has no POD or no description in a =head1 NAME section\n"
       if $self->{verbose} && !$desc;
     return $desc;

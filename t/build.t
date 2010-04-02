@@ -1,12 +1,13 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 53;
+use Test::More tests => 121;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
 use Test::File;
 use Test::XPath;
+use utf8;
 
 my $CLASS;
 BEGIN {
@@ -100,17 +101,113 @@ $tx->is(
 
 # Check the body element.
 $tx->is( 'count(/html/body/div)', 2, 'Should have 2 top-level divs' );
-$tx->ok( '/html/body/div[@id="nav"]', sub {
+$tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
     $_->is('./h3', $ps->nav_header, 'Should have title header');
-    $_->ok('./ul[@id="tree"]', sub {
-        $_->ok('./li[@id="toc"]', sub {
-            $_->is('./a[@href="toc.html"]', 'TOC', 'Should have TOC item');
-        }, 'Should have toc li');
-    }, 'Should have tree ul')
-}, 'Should have nav div');
-$tx->ok( '/html/body/div[@id="doc"]', 'Should have doc div');
 
-#diag `cat $doc_root/index.html`;
+    $_->ok('./ul[@id="tree"]', 'Should have tree ul', sub {
+        $_->is('count(./li)', 4, 'Should have four nav list items');
+
+        # Check TOC.
+        $_->is('./li[1]/@id', 'toc', 'The first should be the TOC');
+        $_->ok('./li[@id="toc"]', 'Should have toc li', sub {
+            $_->is('./a[@href="toc.html"]', 'TOC', 'Should have TOC item');
+        });
+
+        # Check first nav link.
+        $_->is('./li[2]/@id', 'Foo', 'Second li should be Foo');
+        $_->is('count(./li[2]/*)', 1, 'It should have one subelement');
+        $_->like('./li[2]', qr/Foo\n/, 'It should be labled "Foo"');
+        $_->ok('./li[2]/ul', 'It should be an unordered list', sub {
+            $_->is(
+                'count(./*)', 2,
+                'That unordered list should have two subelements'
+            );
+            $_->is(
+                'count(./li)', 2, 'Both should be li elements'
+            );
+            $_->ok('./li[@id="Foo::Bar"]', 'The first should be the Foo::Bar item', sub {
+                $_->is(
+                    'count(./*)', 2, 'Which should have two subelements'
+                );
+                $_->is(
+                    './a[@href="Foo/Bar.html"]', 'Bar', 'One should link to Bar'
+                );
+                $_->ok('./ul', 'The other should be an unordered list', sub {
+                    $_->is(
+                        'count(./*)', 1, 'It should have 1 subelement'
+                    );
+                    $_->ok(
+                        './li[@id="Foo::Bar::Baz"]', 'Which should be an li', sub {
+                            $_->is('count(./*)', 1, 'That li should have one sub');
+                            $_->is(
+                                './a[@href="Foo/Bar/Baz.html"]', 'Baz',
+                                'Which should link to Baz'
+                            );
+                    });
+                });
+            });
+
+            $_->ok(
+                './li[@id="Foo::Shizzle"]',
+                'The second should be the Foo::Shizzle item',
+                sub {
+                    $_->is(
+                        'count(./*)', 1, 'It should have 1 subelement'
+                    );
+                    $_->is(
+                        './a[@href="Foo/Shizzle.html"]', 'Shizzle',
+                        'Which should link to Shizzle'
+                    );
+                },
+            );
+        });
+
+        # Look at the second nav link.
+        $_->is('./li[3]/@id', 'Hello', 'third li should be Hello');
+        $_->is('count(./li[3]/*)', 1, 'It should have one subelement');
+        $_->is(
+            './li/a[@href="Hello.html"]', 'Hello',
+            'Which should be a link to Hello'
+        );
+
+        # And finally the fourth nav link.
+        $_->is('./li[4]/@id', 'Heya', 'Second li should be Heya');
+        $_->ok('./li[4]', 'Look at those subelements', sub {
+            $_->is('count(./*)', 2, 'It should have two subelements');
+            $_->is('./a[@href="Heya.html"]', 'Heya', 'First should link to Heya');
+            $_->ok('./ul', 'Second should be a ul', sub {
+                $_->is('count(./*)', 1, 'It should have one subelement');
+                $_->ok('./li[@id="Heya::Man"]', 'It should be the Heya::Man li', sub {
+                    $_->is('count(./*)', 2, 'It should have two subelements');
+                    $_->is(
+                        './a[@href="Heya/Man.html"]', 'Man',
+                        'One should link to Heya::Man'
+                    );
+                    $_->ok('./ul', 'Second should be a ul', sub {
+                        $_->is('count(./*)', 1, 'It should have one subelement');
+                        $_->ok(
+                            './li[@id="Heya::Man::What"]',
+                            'It should be the Heya::Man::What li', sub {
+                                $_->is(
+                                    './a[@href="Heya/Man/What.html"]', 'What',
+                                    'It should link to Heya::Man::What'
+                                );
+                            }
+                        );
+                    });
+                });
+            });
+        });
+
+    });
+});
+
+# Validate doc div.
+$tx->ok('/html/body/div[@id="doc"]', 'Should have doc div', sub {
+    $_->is('.', '', 'Which should be empty');
+    $_->is('count(./*)', 0, 'And should have no subelements');
+});
+$tx->is('/html/body/div[last()]/@id', 'doc', 'Which should be last');
 
 ##############################################################################
 # Validate the TOC.
@@ -183,9 +280,32 @@ $tx->ok('/html/body/ul[1]', sub {
 }, 'Should have first unordered list');
 
 # Class list.
-$tx->ok('/html/body/ul[2]', sub {
+$tx->ok('/html/body/ul[2]', 'Should have second unordered list', sub {
+    $_->is('count(./*)', 7, 'It should have seven subelements');
+    $_->is('count(./li)', 7, 'All of which should be li');
 
-}, 'Should have second unordered list');
-
-#diag `cat $doc_root/toc.html`;
-
+    my $i = 0;
+    for my $link(
+        [ 'Foo::Bar',        'Get the Foo out of the Bar!'     ],
+        [ 'Foo::Bar::Baz',   'Bazzle your Bar, Foo!'           ],
+        [ 'Foo::Shizzle',    'Get the Foo out of the Shizzle!' ],
+        [ 'Hello',           'Hello World!'                    ],
+        [ 'Heya',            "How *you* doin'?"                ],
+        [ 'Heya::Man',       'Hey man, wassup?'                ],
+        [ 'Heya::Man::What', 'Hey man, wassup, yo?'            ],
+    ) {
+        ++$i;
+        $_->ok("./li[$i]", "Check li #$i", sub {
+            $_->is('count(./*)', 1, 'It should have one subelement');
+            $_->is(
+                '.', "$link->[0]—$link->[1]",
+                q{It should have $link->[0]'s name and abstract}
+            );
+            (my $url = $link->[0]) =~ s{::}{/}g;
+            $_->is(
+                "./a[\@href='$url.html'][\@rel='section'][\@name='$link->[0]']",
+                $link->[0], "Which should link to $link->[0]",
+            );
+        });
+    }
+});
