@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 22;
+use Test::More tests => 26;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -28,6 +28,7 @@ can_ok $CLASS, qw(
     js_path
     verbose
     title
+    versioned_title
 
     run
     new
@@ -75,6 +76,9 @@ is $ps->index_file, 'index.html', 'Should have defautl index file';
 is $ps->verbose, 0, 'Should have default verbosity';
 is $ps->js_path, '', 'Should have default js_path';
 is $ps->css_path, '', 'Should have default css_path';
+is $ps->title, 'Foo::Bar::Baz', 'Should have title';
+is $ps->main_module, 'Foo::Bar::Baz', 'Should have main module';
+is $ps->sample_module, 'Foo::Bar::Baz', 'Should have sample module';
 
 is_deeply $ps->module_roots, [$mod_root],
     'module_roots should be converted to an array';
@@ -82,16 +86,18 @@ is_deeply $ps->base_uri, [$base_uri],
     'base_uri should be converted to an array';
 
 isa_ok $ps = $CLASS->new({
-    doc_root     => $doc_root,
-    base_uri     => $base_uri,
-    module_roots => [$mod_root],
-    base_uri     => [$base_uri],
+    doc_root        => $doc_root,
+    base_uri        => $base_uri,
+    module_roots    => [$mod_root],
+    base_uri        => [$base_uri],
+    versioned_title => 1,
 }), $CLASS, 'another object';
 
 is_deeply $ps->module_roots, [$mod_root],
     'module_roots array should be retained';
 is_deeply $ps->base_uri, [$base_uri],
     'base_uri array should be retained';
+is $ps->title, 'Foo::Bar::Baz 0.41', 'Should have title with version';
 
 my $path = "$$-" . __FILE__ . time;
 eval { $CLASS->new({

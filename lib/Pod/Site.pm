@@ -16,6 +16,7 @@ use Object::Tiny qw(
     index_file
     css_path
     js_path
+    versioned_title
     verbose
 );
 
@@ -404,7 +405,7 @@ sub _find_title {
     my $mod_file = $self->_main_module_file;
     my $info = Module::Build::ModuleInfo->new_from_file( $mod_file )
         or die "Could not find $mod_file\n";
-
+    return $info->name unless $self->versioned_title && $info->version;
     return $info->name . ' ' . $info->version;
 }
 
@@ -422,18 +423,19 @@ sub _config {
     );
 
     Getopt::Long::GetOptions(
-        'title|t=s'         => \$opts{title},
-        'doc-root|d=s'      => \$opts{doc_root},
-        'base-uri|u=s@'     => \$opts{base_uri},
-        'sample-module|s=s' => \$opts{sample_module},
-        'main-module|m=s'   => \$opts{main_module},
-        'index-file|i=s'    => \$opts{index_file},
-        'css-path|c=s'      => \$opts{css_path},
-        'js-path|j=s'       => \$opts{js_path},
-        'verbose|V+'        => \$opts{verbose},
-        'help|h'            => \$opts{help},
-        'man|M'             => \$opts{man},
-        'version|v'         => \$opts{version},
+        'title|t=s'          => \$opts{title},
+        'doc-root|d=s'       => \$opts{doc_root},
+        'base-uri|u=s@'      => \$opts{base_uri},
+        'sample-module|s=s'  => \$opts{sample_module},
+        'main-module|m=s'    => \$opts{main_module},
+        'versioned-title|n!' => \$opts{versioned_title},
+        'index-file|i=s'     => \$opts{index_file},
+        'css-path|c=s'       => \$opts{css_path},
+        'js-path|j=s'        => \$opts{js_path},
+        'verbose|V+'         => \$opts{verbose},
+        'help|h'             => \$opts{help},
+        'man|M'              => \$opts{man},
+        'version|v'          => \$opts{version},
     ) or $self->pod2usage;
 
     # Handle documentation requests.

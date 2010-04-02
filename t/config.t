@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 23;
+use Test::More tests => 24;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -21,19 +21,20 @@ my $base_uri = '/docs/';
 END { remove_tree if -d $tmpdir }
 
 my %config = (
-    title         => undef,
-    doc_root      => $doc_root,
-    base_uri      => [$base_uri],
-    module_roots  => [$mod_root],
-    verbose       => 0,
-    version       => undef,
-    css_path      => '',
-    js_path       => '',
-    index_file    => 'index.html',
-    sample_module => undef,
-    main_module   => undef,
-    man           => undef,
-    help          => undef,
+    title           => undef,
+    doc_root        => $doc_root,
+    base_uri        => [$base_uri],
+    module_roots    => [$mod_root],
+    verbose         => 0,
+    version         => undef,
+    css_path        => '',
+    js_path         => '',
+    index_file      => 'index.html',
+    sample_module   => undef,
+    main_module     => undef,
+    versioned_title => undef,
+    man             => undef,
+    help            => undef,
 );
 
 DEFAULTS: {
@@ -117,26 +118,27 @@ LOTS: {
         '--css-path'      => '/some/file.css',
         '--js-path'       => '/some/file.js',
         '--title'         => 'Eat me',
+        '--versioned-title',
         '--verbose', '--verbose', '--verbose',
         $mod_root,
     );
 
     is_deeply $CLASS->_config, {
-        doc_root      => $doc_root,
-        base_uri      => [$base_uri],
-        module_roots  => [$mod_root],
-        verbose       => 3,
-        version       => undef,
-        css_path      => '/some/file.css',
-        js_path       => '/some/file.js',
-        index_file    => 'default.htm',
-        sample_module => 'lib/Hello.pm',
-        main_module   => 'lib/Bye.pm',
-        title         => 'Eat me',
-        man           => undef,
-        help          => undef,
+        doc_root        => $doc_root,
+        base_uri        => [$base_uri],
+        module_roots    => [$mod_root],
+        verbose         => 3,
+        version         => undef,
+        css_path        => '/some/file.css',
+        js_path         => '/some/file.js',
+        index_file      => 'default.htm',
+        sample_module   => 'lib/Hello.pm',
+        main_module     => 'lib/Bye.pm',
+        title           => 'Eat me',
+        versioned_title => 1,
+        man             => undef,
+        help            => undef,
     }, 'Lots of opts should work';
-
 }
 
 SHORT: {
@@ -149,26 +151,41 @@ SHORT: {
         '-c' => '/some/file.css',
         '-j' => '/some/file.js',
         '-t' => 'Eat me',
+        '-n',
         '-VVV',
         $mod_root,
     );
 
     is_deeply $CLASS->_config, {
-        doc_root      => $doc_root,
-        base_uri      => [$base_uri],
-        module_roots  => [$mod_root],
-        verbose       => 3,
-        version       => undef,
-        css_path      => '/some/file.css',
-        js_path       => '/some/file.js',
-        index_file    => 'default.htm',
-        sample_module => 'lib/Hello.pm',
-        main_module   => 'lib/Bye.pm',
-        title         => 'Eat me',
-        man           => undef,
-        help          => undef,
+        doc_root        => $doc_root,
+        base_uri        => [$base_uri],
+        module_roots    => [$mod_root],
+        verbose         => 3,
+        version         => undef,
+        css_path        => '/some/file.css',
+        js_path         => '/some/file.js',
+        index_file      => 'default.htm',
+        sample_module   => 'lib/Hello.pm',
+        main_module     => 'lib/Bye.pm',
+        title           => 'Eat me',
+        versioned_title => 1,
+        man             => undef,
+        help            => undef,
     }, 'Lots of short opts should work';
 
+}
+
+NEGATED: {
+    local @ARGV = (
+        '--doc-root'      => $doc_root,
+        '--base-uri'      => $base_uri,
+        '--no-versioned-title',
+        $mod_root,
+    );
+    is_deeply $CLASS->_config, {
+        %config,
+        versioned_title => 0,
+    }, 'Negated opts should work';
 }
 
 POD2USAGE: {
