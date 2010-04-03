@@ -86,7 +86,7 @@ sub build {
     $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
     $self->finish_toc($toc_fh);
-    # $self->copy_etc();
+    $self->copy_etc();
 
     # Close up shop.
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};

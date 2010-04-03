@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 149;
+use Test::More tests => 151;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
@@ -30,9 +30,12 @@ ok my $ps = Pod::Site->new({
     label        => 'API Browser',
 }), 'Create Pod::Site object';
 
+# Build it.
 file_not_exists_ok $doc_root, 'Doc root should not yet exist';
 ok $ps->build, 'Build the site';
 file_exists_ok $doc_root, 'Doc root should now exist';
+
+# Verify stuff in the object.
 is_deeply $ps->module_tree, {
     'Heya' => {
         'Man' => {
@@ -60,6 +63,10 @@ is_deeply $ps->bin_files, {
 is $ps->main_module,   'Foo::Bar::Baz', 'Should have a main module';
 is $ps->sample_module, 'Foo::Bar::Baz', 'Should have a sample module';
 is $ps->title,         'Foo::Bar::Baz', 'Should have default title';
+
+# Check for JavaScript and CSS files.
+file_exists_ok catfile($doc_root, 'podsite.css'), 'CSS file should exist';
+file_exists_ok catfile($doc_root, 'podsite.js'),  'JS file should exist';
 
 ##############################################################################
 # Validate the index page.
@@ -237,8 +244,6 @@ $tx->ok('/html/body/div[@id="doc"]', 'Should have doc div', sub {
     $_->is('count(./*)', 0, 'And should have no subelements');
 });
 $tx->is('/html/body/div[last()]/@id', 'doc', 'Which should be last');
-
-diag `cat $doc_root/index.html`;
 
 ##############################################################################
 # Validate the TOC.
