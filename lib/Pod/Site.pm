@@ -94,7 +94,7 @@ sub build {
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};
     close $toc_fh or die qq{Could not close "$toc_file": $!\n};
 
-#    $self->batch_html( @{ $self }{qw(doc_root lib bin)} );
+    $self->batch_html;
 }
 
 sub start_nav {
@@ -257,13 +257,14 @@ sub batch_html {
     local $Pod::Site::_instance = $self;
     my $batchconv = Pod::Simple::HTMLBatch->new;
     $batchconv->index(1);
-    $batchconv->verbose($self->{verbose});
+    $batchconv->verbose($self->verbose);
     $batchconv->contents_file( undef );
     $batchconv->css_flurry(0);
     $batchconv->javascript_flurry(0);
     $batchconv->html_render_class('Pod::Site::XHTML');
     $batchconv->search_class('Pod::Site::Search');
-    $batchconv->batch_convert( \@_, $self->{doc_root} );
+    $batchconv->batch_convert( $self->module_roots, $self->{doc_root} );
+    return 1;
 }
 
 sub copy_etc {
@@ -550,6 +551,7 @@ sub instance { $instance }
 sub new {
     my $self = shift->SUPER::new(@_);
     $self->laborious(1);
+    $self->inc(0);
     $instance = $self;
     return $self;
 }
@@ -589,7 +591,7 @@ sub html_header {
   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="generator" content="Pod::Site $version" />
     <title>$title</title>
   </head>
