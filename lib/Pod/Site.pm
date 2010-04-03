@@ -75,7 +75,7 @@ sub build {
     $self->{toc_fh} = $toc_fh;
     $self->{seen} = {};
     $self->{indent} = 1;
-    $self->{base_space} = '    ';
+    $self->{base_space} = '      ';
     $self->{spacer} = '  ';
     $self->{uri} = '';
 
@@ -83,7 +83,7 @@ sub build {
     $self->start_nav($idx_fh);
     $self->start_toc($toc_fh);
     $self->output($idx_fh);
-    # $self->output_bin($idx_fh);
+    $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
     $self->finish_toc($toc_fh);
     # $self->copy_etc();
@@ -184,7 +184,7 @@ sub output {
                 my $path = $tree->{"$key.pm"};
                 if (my $desc = $self->get_desc($class, $path, $self)) {
                     $item = qq{<a href="$self->{uri}$key.html">$key</a>};
-                    $self->_output_class($fh, $fn, $path, $class, 1, $desc);
+                    $self->_output_navlink($fh, $fn, $path, $class, 1, $desc);
                 }
                 $self->{seen}{$class} = 1;
             }
@@ -201,38 +201,24 @@ sub output {
             $self->{uri} =~ s|$key/$||;
         } else {
             # It's a class. Create a link to it.
-            $self->_output_class($fh, $fn, $data, $class) unless $self->{seen}{$class};
+            $self->_output_navlink($fh, $fn, $data, $class) unless $self->{seen}{$class};
         }
     }
 }
 
 sub output_bin {
     my ($self, $fh) = @_;
-    return unless -d $self->{bin};
+    my $files = $self->bin_files;
+    return unless %{ $files };
 
     # Start the list in the tree browser.
     print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
       qq{<li id="bin">bin\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
+    ++$self->{indent};
 
-    my $rule = File::Find::Rule->file->executable;
-    my $tree = File::Slurp::Tree::slurp_tree($self->{bin}, rule => $rule);
-
-    for my $pl (sort keys %{ $tree }) {
-        # Skip directories.
-        next if ref $tree->{$pl};
-        print "STDERR Reading $pl\n" if $self->verbose > 1;
-        # Get the description.
-        my $desc = $self->get_desc($pl, $tree->{$pl}, $pl) or next;
-
-        # Output the Tree Browser Link.
-        print STDERR "Outputting $pl nav link\n" if $self->verbose > 2;
-        print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-          qq{<li id="$pl"><a href="$pl.html">$pl</a></li>\n};
-
-        # Output the TOC link.
-        print STDERR "Outputting toc link\n" if $self->verbose > 2;
-        print {$self->{toc_fh}} $self->{base_space},
-          qq{  <li><a href="$pl.html" rel="section" name="$pl">$pl</a>&#x2014;$desc</li>\n};
+    for my $pl (sort { lc $a cmp lc $b } keys %{ $files }) {
+        my $file = $files->{$pl};
+        $self->_output_navlink($fh, $pl, $file, $pl);
     }
 
     print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
@@ -296,10 +282,10 @@ sub _udent {
     return $string;
 }
 
-sub _output_class {
+sub _output_navlink {
     my ($self, $fh, $key, $fn, $class, $no_link, $desc) = @_;
 
-    $desc ||= $self->get_desc($class, $fn, $class) or return;
+    $desc ||= $self->get_desc($class, $fn) or return;
 
     # Output the Tree Browser Link.
     print "Outputting $class nav link\n" if $self->{verbose} > 2;
@@ -369,6 +355,34 @@ sub module_tree {
     }
 
     return $tree;
+}
+
+sub bin_files {
+    my $self = shift;
+    return $self->{bin_files} if $self->{bin_files};
+
+    my $files = $self->{bin_files} = {};
+
+    # From File::Find::Rule docs.
+    my $rule = File::Find::Rule->or(
+        File::Find::Rule->name( '*.pl' ),
+        File::Find::Rule->exec(sub {
+            if (open my $fh, $_) {
+                my $shebang = <$fh>;
+                close $fh;
+                return $shebang =~ /^#!.*\bperl/ if $shebang;
+            }
+            return 0;
+        }),
+    );
+
+    for my $lib (@{ $self->module_roots }) {
+        for my $file ( $rule->in( $lib ) ) {
+            $files->{ (File::Spec->splitpath($file))[-1] } = $file;
+        }
+    }
+
+    return $files;
 }
 
 sub sample_module {

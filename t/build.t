@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 121;
+use Test::More tests => 149;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile);
 use File::Path qw(remove_tree);
@@ -16,6 +16,7 @@ BEGIN {
 }
 
 my $mod_root = catdir qw(t lib);
+my $bin_dir  = catdir qw(t bin);
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
@@ -25,7 +26,7 @@ END { remove_tree if -d $tmpdir }
 ok my $ps = Pod::Site->new({
     doc_root     => $doc_root,
     base_uri     => $base_uri,
-    module_roots => $mod_root,
+    module_roots => [$mod_root, $bin_dir],
     label        => 'API Browser',
 }), 'Create Pod::Site object';
 
@@ -49,6 +50,13 @@ is_deeply $ps->module_tree, {
     },
     'Hello.pm' => catfile qw(t lib Hello.pm)
 }, 'Should have a module tree';
+
+is_deeply $ps->bin_files, {
+    'hello'   => 't/bin/hello',
+    'heya.pl' => 't/bin/heya.pl',
+    'bar'     => 't/bin/foo/bar',
+}, 'Should have bin files';
+
 is $ps->main_module,   'Foo::Bar::Baz', 'Should have a main module';
 is $ps->sample_module, 'Foo::Bar::Baz', 'Should have a sample module';
 is $ps->title,         'Foo::Bar::Baz', 'Should have default title';
@@ -105,7 +113,7 @@ $tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
     $_->is('./h3', $ps->nav_header, 'Should have title header');
 
     $_->ok('./ul[@id="tree"]', 'Should have tree ul', sub {
-        $_->is('count(./li)', 4, 'Should have four nav list items');
+        $_->is('count(./li)', 5, 'Should have five nav list items');
 
         # Check TOC.
         $_->is('./li[1]/@id', 'toc', 'The first should be the TOC');
@@ -170,8 +178,8 @@ $tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
             'Which should be a link to Hello'
         );
 
-        # And finally the fourth nav link.
-        $_->is('./li[4]/@id', 'Heya', 'Second li should be Heya');
+        # And the fourth nav link.
+        $_->is('./li[4]/@id', 'Heya', 'Fourth li should be Heya');
         $_->ok('./li[4]', 'Look at those subelements', sub {
             $_->is('count(./*)', 2, 'It should have two subelements');
             $_->is('./a[@href="Heya.html"]', 'Heya', 'First should link to Heya');
@@ -199,6 +207,27 @@ $tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
             });
         });
 
+        # And finally the fifth nav link.
+        $_->is('./li[5]/@id', 'bin', 'Fifth li should be bin');
+        $_->ok('./li[5]', 'Look at its elements', sub {
+            $_->is('count(./*)', 1, 'It should have one');
+            $_->ok('./ul', 'It should be a ul', sub {
+                $_->is('count(./*)', 3, 'Which should have 3 children');
+                $_->is('count(./li)', 3, 'All three should be li');
+
+                $_->is('./li[1]/@id', 'bar', 'The first one should be bar');
+                $_->is('count(./li[1]/*)', 1, 'Which should have 1 child');
+                $_->is('./li[1]/a[@href="bar.html"]', 'bar', 'Which should link to bar');
+
+                $_->is('./li[2]/@id', 'hello', 'The second one should be hello');
+                $_->is('count(./li[2]/*)', 1, 'Which should have 1 child');
+                $_->is('./li[2]/a[@href="hello.html"]', 'hello', 'Which should link to hello');
+
+                $_->is('./li[3]/@id', 'heya.pl', 'The third one should be heya.pl');
+                $_->is('count(./li[3]/*)', 1, 'Which should have 1 child');
+                $_->is('./li[3]/a[@href="heya.pl.html"]', 'heya.pl', 'Which should link to heya.pl');
+            });
+        });
     });
 });
 
@@ -208,6 +237,8 @@ $tx->ok('/html/body/div[@id="doc"]', 'Should have doc div', sub {
     $_->is('count(./*)', 0, 'And should have no subelements');
 });
 $tx->is('/html/body/div[last()]/@id', 'doc', 'Which should be last');
+
+diag `cat $doc_root/index.html`;
 
 ##############################################################################
 # Validate the TOC.
@@ -281,8 +312,8 @@ $tx->ok('/html/body/ul[1]', sub {
 
 # Class list.
 $tx->ok('/html/body/ul[2]', 'Should have second unordered list', sub {
-    $_->is('count(./*)', 7, 'It should have seven subelements');
-    $_->is('count(./li)', 7, 'All of which should be li');
+    $_->is('count(./*)',  10, 'It should have seven subelements');
+    $_->is('count(./li)', 10, 'All of which should be li');
 
     my $i = 0;
     for my $link(
@@ -293,6 +324,9 @@ $tx->ok('/html/body/ul[2]', 'Should have second unordered list', sub {
         [ 'Heya',            "How *you* doin'?"                ],
         [ 'Heya::Man',       'Hey man, wassup?'                ],
         [ 'Heya::Man::What', 'Hey man, wassup, yo?'            ],
+        [ 'bar',             'This is the bar, foo'            ],
+        [ 'hello',           'Welcome my friend'               ],
+        [ 'heya.pl',         'Heya yourself'                   ],
     ) {
         ++$i;
         $_->ok("./li[$i]", "Check li #$i", sub {
