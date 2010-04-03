@@ -32,6 +32,8 @@ can_ok $CLASS, qw(
     label
     nav_header
     main_title
+    replace_css
+    replace_js
 
     run
     new

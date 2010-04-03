@@ -17,6 +17,8 @@ use Object::Tiny qw(
     css_path
     js_path
     versioned_title
+    replace_css
+    replace_js
     label
     verbose
 );
@@ -269,10 +271,11 @@ sub copy_etc {
     require File::Copy;
     (my $from = __FILE__) =~ s/[.]pm$//;
     for my $ext qw(css js) {
+        my $dest = File::Spec->catfile($self->{doc_root}, "podsite.$ext");
         File::Copy::copy(
             File::Spec->catfile( $from, "podsite.$ext" ),
             $self->{doc_root}
-        );
+        ) unless -e $dest && !$self->{"replace_$ext"};
     }
 }
 
@@ -469,6 +472,8 @@ sub _config {
         'index-file|i=s'     => \$opts{index_file},
         'css-path|c=s'       => \$opts{css_path},
         'js-path|j=s'        => \$opts{js_path},
+        'replace-css'        => \$opts{replace_css},
+        'replace-js'         => \$opts{replace_js},
         'verbose|V+'         => \$opts{verbose},
         'help|h'             => \$opts{help},
         'man|M'              => \$opts{man},
