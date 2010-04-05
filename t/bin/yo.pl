@@ -4,6 +4,6 @@ exit;
 
 =head1 Name
 
-yo.pl - Heya yourself
+yo - Heya yourself
 
 =cut

@@ -40,3 +40,6 @@ the same terms as Perl itself.
 
 =cut
 
+package Foo::Bar;
+
+our $VERSION = '0.41';

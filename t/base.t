@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 32;
+use Test::More tests => 34;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -46,7 +46,7 @@ can_ok $CLASS, qw(
     finish_toc
     batch_html
     get_desc
-    module_tree
+    mod_files
     main_module
     sample_module
     pod2usage
@@ -77,15 +77,16 @@ isa_ok my $ps = $CLASS->new({
     module_roots => $mod_root,
 }), $CLASS, 'new object';
 
+ok $ps->build, 'Build it and they will come';
 is $ps->index_file, 'index.html', 'Should have defautl index file';
 is $ps->verbose, 0, 'Should have default verbosity';
 is $ps->js_path, '', 'Should have default js_path';
 is $ps->css_path, '', 'Should have default css_path';
-is $ps->title, 'Foo::Bar::Baz', 'Should have title';
+is $ps->title, 'Foo::Bar', 'Should have title';
 is $ps->main_title, $ps->title, 'Should have main title';
 is $ps->nav_header, $ps->title, 'Should have nav header';
-is $ps->main_module, 'Foo::Bar::Baz', 'Should have main module';
-is $ps->sample_module, 'Foo::Bar::Baz', 'Should have sample module';
+is $ps->main_module, 'Foo::Bar', 'Should have main module';
+is $ps->sample_module, 'Foo::Bar', 'Should have sample module';
 is $ps->label, undef, 'Should have no label';
 
 is_deeply $ps->module_roots, [$mod_root],
@@ -102,11 +103,12 @@ isa_ok $ps = $CLASS->new({
     label           => 'API Browser',
 }), $CLASS, 'another object';
 
+ok $ps->build, 'Build it again';
 is_deeply $ps->module_roots, [$mod_root],
     'module_roots array should be retained';
 is_deeply $ps->base_uri, [$base_uri],
     'base_uri array should be retained';
-is $ps->title, 'Foo::Bar::Baz 0.41', 'Should have title with version';
+is $ps->title, 'Foo::Bar 0.41', 'Should have title with version';
 is $ps->label, 'API Browser', 'Should have label';
 is $ps->nav_header, $ps->title, 'Nav header should be same as title';
 is $ps->main_title, $ps->title . ' ' . $ps->label, 'Should have main title with label';

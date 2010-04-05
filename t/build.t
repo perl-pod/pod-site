@@ -3,7 +3,7 @@
 use strict;
 use Test::More tests => 161;
 #use Test::More 'no_plan';
-use File::Spec::Functions qw(tmpdir catdir catfile);
+use File::Spec::Functions qw(tmpdir catdir catfile rel2abs);
 use File::Path qw(remove_tree);
 use Test::File;
 use Test::XPath;
@@ -16,7 +16,9 @@ BEGIN {
 }
 
 my $mod_root = catdir qw(t lib);
-my $bin_dir  = catdir qw(t bin);
+my $mod_dir  = rel2abs $mod_root;
+my $bin_root = catdir qw(t bin);
+my $bin_dir  = rel2abs $bin_root;
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
@@ -26,7 +28,7 @@ my $base_uri = '/docs/';
 ok my $ps = Pod::Site->new({
     doc_root     => $doc_root,
     base_uri     => $base_uri,
-    module_roots => [$mod_root, $bin_dir],
+    module_roots => [$mod_root, $bin_root],
     label        => 'API Browser',
 }), 'Create Pod::Site object';
 
@@ -36,33 +38,33 @@ ok $ps->build, 'Build the site';
 file_exists_ok $doc_root, 'Doc root should now exist';
 
 # Verify stuff in the object.
-is_deeply $ps->module_tree, {
+is_deeply $ps->mod_files, {
     'Heya' => {
         'Man' => {
-            'What.pm' => catfile qw(t lib Heya Man What.pm)
+            'What.pm' => catfile $mod_dir, qw(Heya Man What.pm)
         },
-        'Man.pm' => catfile qw(t lib Heya Man.pm)
+        'Man.pm' => catfile $mod_dir, qw(Heya Man.pm)
     },
-    'Heya.pm' => catfile( qw(t lib Heya.pm)),
+    'Heya.pm' => catfile( $mod_dir, qw(Heya.pm)),
     'Foo' => {
         'Bar' => {
-            'Baz.pm' => catfile(qw(t lib Foo Bar Baz.pm))
+            'Baz.pm' => catfile($mod_dir, qw(Foo Bar Baz.pm))
         },
-        'Shizzle.pm' => catfile(qw(t lib Foo Shizzle.pm)),
-        'Bar.pm' => catfile qw(t lib Foo Bar.pm)
+        'Shizzle.pm' => catfile($mod_dir, qw(Foo Shizzle.pm)),
+        'Bar.pm' => catfile $mod_dir, qw(Foo Bar.pm)
     },
-    'Hello.pm' => catfile qw(t lib Hello.pm)
+    'Hello.pm' => catfile $mod_dir, qw(Hello.pm)
 }, 'Should have a module tree';
 
 is_deeply $ps->bin_files, {
-    'howdy' => 't/bin/howdy',
-    'yo.pl' => 't/bin/yo.pl',
-    'yay'   => 't/bin/foo/yay',
+    'foo/yay' => "$bin_dir/foo/yay",
+    'howdy'   => "$bin_dir/howdy",
+    'yo'      => "$bin_dir/yo.pl"
 }, 'Should have bin files';
 
-is $ps->main_module,   'Foo::Bar::Baz', 'Should have a main module';
-is $ps->sample_module, 'Foo::Bar::Baz', 'Should have a sample module';
-is $ps->title,         'Foo::Bar::Baz', 'Should have default title';
+is $ps->main_module,   'Foo::Bar', 'Should have a main module';
+is $ps->sample_module, 'Foo::Bar', 'Should have a sample module';
+is $ps->title,         'Foo::Bar', 'Should have default title';
 
 # Check for JavaScript and CSS files.
 file_exists_ok catfile($doc_root, 'podsite.css'), 'CSS file should exist';
@@ -86,6 +88,7 @@ for my $file (
 
 ##############################################################################
 # Validate the index page.
+
 ok my $tx = Test::XPath->new(
     file    => catfile($doc_root, 'index.html'),
     is_html => 1
@@ -238,17 +241,17 @@ $tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
                 $_->is('count(./*)', 3, 'Which should have 3 children');
                 $_->is('count(./li)', 3, 'All three should be li');
 
-                $_->is('./li[1]/@id', 'howdy', 'The first one should be howdy');
+                $_->is('./li[1]/@id', 'foo/yay', 'The second one should be yay');
                 $_->is('count(./li[1]/*)', 1, 'Which should have 1 child');
-                $_->is('./li[1]/a[@href="howdy.html"]', 'howdy', 'Which should link to howdy');
+                $_->is('./li[1]/a[@href="foo/yay.html"]', 'foo/yay', 'Which should link to yay');
 
-                $_->is('./li[2]/@id', 'yay', 'The second one should be yay');
+                $_->is('./li[2]/@id', 'howdy', 'The first one should be howdy');
                 $_->is('count(./li[2]/*)', 1, 'Which should have 1 child');
-                $_->is('./li[2]/a[@href="yay.html"]', 'yay', 'Which should link to yay');
+                $_->is('./li[2]/a[@href="howdy.html"]', 'howdy', 'Which should link to howdy');
 
-                $_->is('./li[3]/@id', 'yo.pl', 'The third one should be yo.pl');
+                $_->is('./li[3]/@id', 'yo', 'The third one should be yo.pl');
                 $_->is('count(./li[3]/*)', 1, 'Which should have 1 child');
-                $_->is('./li[3]/a[@href="yo.pl.html"]', 'yo.pl', 'Which should link to yo.pl');
+                $_->is('./li[3]/a[@href="yo.html"]', 'yo', 'Which should link to yo');
             });
         });
     });
@@ -322,11 +325,11 @@ $tx->ok('/html/body/ul[1]', sub {
     $_->is('count(./li)', 2, 'Should have two list items');
     $_->is('count(./li/a)', 2, 'Both should have anchors');
     $_->is(
-        './li/a[@href="./?Foo::Bar::Baz"]', '/?Foo::Bar::Baz',
+        './li/a[@href="./?Foo::Bar"]', '/?Foo::Bar',
         'First link should be correct'
     );
     $_->is(
-        './li/a[@href="./Foo::Bar::Baz"]', '/Foo::Bar::Baz',
+        './li/a[@href="./Foo::Bar"]', '/Foo::Bar',
         'Second link should be correct'
     );
 }, 'Should have first unordered list');
@@ -345,9 +348,9 @@ $tx->ok('/html/body/ul[2]', 'Should have second unordered list', sub {
         [ 'Heya',            "How *you* doin'?"                ],
         [ 'Heya::Man',       'Hey man, wassup?'                ],
         [ 'Heya::Man::What', 'Hey man, wassup, yo?'            ],
+        [ 'foo/yay',         'This is the bar, foo'            ],
         [ 'howdy',           'Welcome my friend'               ],
-        [ 'yay',             'This is the bar, foo'            ],
-        [ 'yo.pl',           'Heya yourself'                   ],
+        [ 'yo',              'Heya yourself'                   ],
     ) {
         ++$i;
         $_->ok("./li[$i]", "Check li #$i", sub {

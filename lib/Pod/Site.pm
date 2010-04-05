@@ -7,8 +7,6 @@ use Carp;
 use Pod::Simple '3.08';
 use HTML::Entities;
 use File::Path;
-use File::Find::Rule;
-use File::Slurp::Tree;
 use Object::Tiny qw(
     module_roots
     doc_root
@@ -21,6 +19,8 @@ use Object::Tiny qw(
     replace_js
     label
     verbose
+    mod_files
+    bin_files
 );
 
 use vars '$VERSION';
@@ -64,6 +64,8 @@ sub build {
     my $self = shift;
     File::Path::mkpath($self->{doc_root}, 0, 0755);
 
+    $self->batch_html;
+
     # The index file is the home page.
     my $idx_file = File::Spec->catfile( $self->doc_root, $self->index_file );
     open my $idx_fh, '>', $idx_file or die qq{Cannot open "$idx_file": $!\n};
@@ -82,9 +84,10 @@ sub build {
     $self->{uri} = '';
 
     # Make it so!
+    $self->sort_files;
     $self->start_nav($idx_fh);
     $self->start_toc($toc_fh);
-    $self->output($idx_fh);
+    $self->output($idx_fh, $self->mod_files);
     $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
     $self->finish_toc($toc_fh);
@@ -93,8 +96,60 @@ sub build {
     # Close up shop.
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};
     close $toc_fh or die qq{Could not close "$toc_file": $!\n};
+}
 
-    $self->batch_html;
+sub sort_files {
+    my $self = shift;
+
+    # Let's see what the search has found.
+    my $stuff = Pod::Site::Search->instance->name2path;
+
+    # Sort the modules from the scripts.
+    my (%mods, %bins);
+    while (my ($name, $path) = each %{ $stuff }) {
+        if ($name =~ /[.]p(?:m|od)$/) {
+            # Likely a module.
+            _set_mod(\%mods, $name, $stuff->{$name});
+        } elsif ($name =~ /[.](?:plx?|bat)$/) {
+            # Likely a script.
+            (my $script = $name) =~ s{::}{/}g;
+            $bins{$script} = $stuff->{$name};
+        } else {
+            # Look for a shebang line.
+            if (open my $fh, '<', $path) {
+                my $shebang = <$fh>;
+                close $fh;
+                if ($shebang && $shebang =~ /^#!.*\bperl/) {
+                    # Likely a script.
+                    (my $script = $name) =~ s{::}{/}g;
+                    $bins{$script} = $stuff->{$name};
+                } else {
+                    # Likely a module.
+                    _set_mod(\%mods, $name, $stuff->{$name});
+                }
+            } else {
+                # Who knows? Default to module.
+                _set_mod(\%mods, $name, $stuff->{$name});
+            }
+        }
+    }
+
+    # Save our findings.
+    $self->{mod_files} = \%mods;
+    $self->{bin_files} = \%bins;
+}
+
+sub _set_mod {
+    my ($mods, $mod, $file) = @_;
+    if ($mod =~ /::/) {
+        my @names = split /::/ => $mod;
+        my $data = $mods->{shift @names} ||= {};
+        my $lln = pop @names;
+        for (@names) { $data = $data->{$_} ||= {} }
+        $data->{"$lln.pm"} = $file;
+    } else {
+        $mods->{"$mod.pm"} = $file;
+    }
 }
 
 sub start_nav {
@@ -170,9 +225,9 @@ sub start_toc {
     EOF
 }
 
+
 sub output {
     my ($self, $fh, $tree) = @_;
-    $tree ||= $self->module_tree;
     for my $key (sort keys %{ $tree }) {
         my $data = $tree->{$key};
         (my $fn = $key) =~ s/\.[^.]+$//;
@@ -184,7 +239,7 @@ sub output {
             my $item = $key;
             if ($tree->{"$key.pm"}) {
                 my $path = $tree->{"$key.pm"};
-                if (my $desc = $self->get_desc($class, $path, $self)) {
+                if (my $desc = $self->get_desc($class, $path)) {
                     $item = qq{<a href="$self->{uri}$key.html">$key</a>};
                     $self->_output_navlink($fh, $fn, $path, $class, 1, $desc);
                 }
@@ -254,7 +309,6 @@ sub batch_html {
     require Pod::Simple::HTMLBatch;
     print STDERR "Creating HTML with Pod::Simple::XHTML\n" if $self->verbose > 1;
     # XXX I'd rather have a way to get this passed to the P::S::XHTML object.
-    local $Pod::Site::_instance = $self;
     my $batchconv = Pod::Simple::HTMLBatch->new;
     $batchconv->index(1);
     $batchconv->verbose($self->verbose);
@@ -289,7 +343,8 @@ sub _udent {
 sub _output_navlink {
     my ($self, $fh, $key, $fn, $class, $no_link, $desc) = @_;
 
-    $desc ||= $self->get_desc($class, $fn) or return;
+    $desc ||= $self->get_desc($class, $fn);
+    $desc = "—$desc" if $desc;
 
     # Output the Tree Browser Link.
     print "Outputting $class nav link\n" if $self->{verbose} > 2;
@@ -300,7 +355,7 @@ sub _output_navlink {
     # Output the TOC link.
     print "Outputting $class TOC link\n" if $self->{verbose} > 2;
     print {$self->{toc_fh}} $self->{base_space}, $self->{spacer},
-      qq{<li><a href="$self->{uri}$key.html" rel="section" name="$class">$class</a>—$desc</li>\n};
+      qq{<li><a href="$self->{uri}$key.html" rel="section" name="$class">$class</a>$desc</li>\n};
     return 1;
 }
 
@@ -309,84 +364,17 @@ sub get_desc {
 
     open my $fh, '<', $file or die "Cannot open $file: $!\n";
     my $desc;
+    local $_;
+    # Cribbed from Module::Build::PodParser.
     while (<$fh>) {
-        next unless /^=head1 NAME$/i;
-        while (<$fh>) {
-            last if /^=\w+/;
-            next unless /\Q$what\E\s+-\s+([^\n]+)$/i;
-            $desc = $1;
-            last;
-        }
-        last;
+        next unless /^=(?!cut)/ .. /^=cut/;  # in POD
+        last if ($desc) = /^  (?:  [a-z:]+  \s+ - \s+  )  (.*\S)  /ix;
     }
 
     close $fh or die "Cannot close $file: $!\n";
     print "$what has no POD or no description in a =head1 NAME section\n"
       if $self->{verbose} && !$desc;
     return $desc;
-}
-
-sub module_tree {
-    my $self = shift;
-    return $self->{module_tree} if $self->{module_tree};
-
-    my $tree = $self->{module_tree} = {};
-    my $rule = File::Find::Rule->file->name(qr/\.p(?:m|od)$/);
-
-    for my $lib (@{ $self->module_roots }) {
-        (my $top = $lib) =~ s{/$}{};
-        for my $file ( $rule->in( $lib ) ) {
-            next if $file eq $top;
-            (my $rel = $file) =~ s{^\Q$top\E/}{};
-            next unless $rel; # it's /
-
-            my @elems = split m{/}, $rel;
-
-            # go to the top of the tree
-            my $node = $tree;
-            # and walk along the path
-            while (my $elem = shift @elems) {
-                # on the path || a dir
-                if (@elems || -d $file) {
-                    $node = $node->{ $elem } ||= {};
-                }
-                else {
-                # a file, remember it.
-                    $node->{ $elem } ||= $file;
-                }
-            }
-        }
-    }
-
-    return $tree;
-}
-
-sub bin_files {
-    my $self = shift;
-    return $self->{bin_files} if $self->{bin_files};
-
-    my $files = $self->{bin_files} = {};
-
-    # From File::Find::Rule docs.
-    my $rule = File::Find::Rule->or(
-        File::Find::Rule->name( '*.pl' ),
-        File::Find::Rule->exec(sub {
-            if (open my $fh, $_) {
-                my $shebang = <$fh>;
-                close $fh;
-                return $shebang =~ /^#!.*\bperl/ if $shebang;
-            }
-            return 0;
-        }),
-    );
-
-    for my $lib (@{ $self->module_roots }) {
-        for my $file ( $rule->in( $lib ) ) {
-            $files->{ (File::Spec->splitpath($file))[-1] } = $file;
-        }
-    }
-
-    return $files;
 }
 
 sub sample_module {
@@ -396,12 +384,23 @@ sub sample_module {
 
 sub main_module {
     my $self = shift;
-    $self->{main_module} ||= $self->_find_module($self->module_tree);
+    $self->{main_module} ||= $self->_find_module;
+}
+
+sub _find_module {
+    my $self = shift;
+    my $search = Pod::Site::Search->instance or return;
+    my $bins   = $self->bin_files || {};
+    for my $mod (sort { lc $a cmp lc $b } keys %{ $search->instance->name2path }) {
+        return $mod unless $bins->{$mod};
+    }
 }
 
 sub title {
     my $self = shift;
-    $self->{title} ||= $self->_find_title;
+    $self->{title} ||= $self->versioned_title
+        ? $self->_versioned_title
+        : $self->main_module;
 }
 
 sub main_title {
@@ -415,38 +414,14 @@ sub nav_header {
     shift->title;
 }
 
-sub _find_module {
-    my ($self, $tree) = @_;
-    for my $key ( sort keys %{ $tree }) {
-        if ($key =~ s/[.]p(?:m|od)$//) {
-            return $key;
-        } elsif (my $mod = $self->_find_module($tree->{$key})) {
-            return $key . "::$mod";
-        }
-    }
-}
-
-sub _main_module_file {
-    my $self = shift;
-    my $mod = $self->main_module;
-    return $mod if $mod =~ /[.]p(?:m|od)$/;
-    my @parts = split /::/, $mod;
-    my $last = pop @parts;
-    my $tree = $self->module_tree;
-    while (@parts) {
-        $tree = $tree->{shift @parts};
-    }
-    return $tree->{"$last.pm"} || $tree->{"$last.pod"};
-}
-
-sub _find_title {
+sub _versioned_title {
     my $self = shift;
     require Module::Build::ModuleInfo;
-    my $mod_file = $self->_main_module_file;
-    my $info = Module::Build::ModuleInfo->new_from_file( $mod_file )
-        or die "Could not find $mod_file\n";
-    return $info->name unless $self->versioned_title && $info->version;
-    return $info->name . ' ' . $info->version;
+    my $mod  = $self->main_module;
+    my $file = Pod::Site::Search->instance->name2path->{$mod} or die "Could not find $mod\n";
+    my $info = Module::Build::ModuleInfo->new_from_file( $file )
+        or die "Could not find $file\n";
+    return "$mod " . $info->version;
 }
 
 sub _config {
@@ -586,7 +561,6 @@ sub html_header {
     my $self = shift;
     my $title = $self->force_title || $self->title || $self->default_title || '';
     my $version = Pod::Site->VERSION;
-    my $site = $Pod::Site::_instance;
     return qq{<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
   "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
