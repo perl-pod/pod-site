@@ -30,14 +30,17 @@ can_ok $CLASS, qw(
     title
     versioned_title
     label
-    nav_header
     main_title
+    nav_header
     replace_css
     replace_js
+    mod_files
+    bin_files
 
     run
     new
     build
+    sort_files
     start_nav
     start_toc
     output
@@ -45,10 +48,12 @@ can_ok $CLASS, qw(
     finish_nav
     finish_toc
     batch_html
+    copy_etc
     get_desc
-    mod_files
+    sample_module
     main_module
     sample_module
+    version
     pod2usage
 );
 
@@ -108,10 +113,12 @@ is_deeply $ps->module_roots, [$mod_root],
     'module_roots array should be retained';
 is_deeply $ps->base_uri, [$base_uri],
     'base_uri array should be retained';
-is $ps->title, 'Foo::Bar 0.41', 'Should have title with version';
+is $ps->title, 'Foo::Bar', 'Should have title';
 is $ps->label, 'API Browser', 'Should have label';
-is $ps->nav_header, $ps->title, 'Nav header should be same as title';
-is $ps->main_title, $ps->title . ' ' . $ps->label, 'Should have main title with label';
+is $ps->nav_header, $ps->title . ' ' . $ps->version,
+    'Nav header should have version';
+is $ps->main_title, $ps->title . ' ' . $ps->version . ' ' . $ps->label,
+    'Should have main title with label';
 
 my $path = "$$-" . __FILE__ . time;
 eval { $CLASS->new({

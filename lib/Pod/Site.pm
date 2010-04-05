@@ -374,7 +374,7 @@ sub get_desc {
     close $fh or die "Cannot close $file: $!\n";
     print "$what has no POD or no description in a =head1 NAME section\n"
       if $self->{verbose} && !$desc;
-    return $desc;
+    return $desc || '';
 }
 
 sub sample_module {
@@ -398,30 +398,31 @@ sub _find_module {
 
 sub title {
     my $self = shift;
-    $self->{title} ||= $self->versioned_title
-        ? $self->_versioned_title
-        : $self->main_module;
+    $self->{title} || $self->main_module;
 }
 
 sub main_title {
     my $self = shift;
-    return $self->label
-        ? $self->title . ' ' . $self->label
-        : $self->title;
+    return $self->{main_title} ||= join ' ',
+        $self->title,
+        ( $self->versioned_title ? $self->version : () ),
+        ( $self->label ? $self->label : () );
 }
 
 sub nav_header {
-    shift->title;
+    my $self = shift;
+    $self->title . ($self->versioned_title ? ' ' . $self->version : '');
 }
 
-sub _versioned_title {
+sub version {
     my $self = shift;
+    return $self->{version} if $self->{version};
     require Module::Build::ModuleInfo;
     my $mod  = $self->main_module;
     my $file = Pod::Site::Search->instance->name2path->{$mod} or die "Could not find $mod\n";
     my $info = Module::Build::ModuleInfo->new_from_file( $file )
         or die "Could not find $file\n";
-    return "$mod " . $info->version;
+    return $self->{version} ||= $info->version;
 }
 
 sub _config {
