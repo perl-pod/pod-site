@@ -16,7 +16,7 @@ my $build = Module::Build->new(
         'Test::XPath'      => '0.12',
     },
     requires           => {
-        'perl'              => 5.006_002,
+        'perl'              => 5.006002,
         'File::Basename'    => 0,
         'File::Copy'        => 0,
         'File::Path'        => 0,
