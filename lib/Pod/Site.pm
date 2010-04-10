@@ -311,7 +311,6 @@ sub batch_html {
     my $self = shift;
     require Pod::Simple::HTMLBatch;
     print STDERR "Creating HTML with Pod::Simple::XHTML\n" if $self->verbose > 1;
-    # XXX I'd rather have a way to get this passed to the P::S::XHTML object.
     my $batchconv = Pod::Simple::HTMLBatch->new;
     $batchconv->index(1);
     $batchconv->verbose($self->verbose);
@@ -590,34 +589,30 @@ Pod::Site - Build browsable HTML documentation for your app
 
 =head1 Usage
 
-  podsite --module-name App               \
+perl -Ilib bin/podsite --doc-root ~/Desktop/api --versioned-title --label 'API Browser' --replace-css --replace-js --base-uri /docs/2.0/api --base-uri /docs/current/api --name Bricolage ~/dev/bricolage/theory/lib ~/Dev/bricolage/theory/bin
+
+
+  podsite --name App                      \
           --doc-root /path/to/output/html \
-          --base-uri /path/to/browser/home \
-          /path/to/app/root
+          --base-uri /browser/base/uri    \
+          /path/to/perl/libs              \
+          /path/to/perl/bins
 
 =head1 Description
 
-This program searches the F<lib> and F<bin> directories of a module
-distribution and generates a jQuery-powered documentation browser from all of
-the Perl modules and scripts that contain POD. It was originally designed for
-the Bricolage project (L<http://www.bricolage.cc/>, but is has evolved for
-general use. Visit L<http://www.bricolage.cc/docs/current/api/> to see a
-sample documentation browser in action. The documentation browser supports
-Safari, Firefox, and IE7 up.
+This program searches a list of directories and generates a
+L<jQuery|http://jquery.org/>-powered documentation site from all of the POD
+files it finds. It was originally designed for the
+L<Bricolage|http://bricolagecms.org/> project but is has evolved for general
+use. Have a look at the L<Bricolage API
+Browser|http://www.bricolagecms.org/docs/current/api/> to see a sample
+documentation site in action. The generated documentation site supports
+Safari, Firefox, and IE7 and up.
 
 Doc Notes:
 
 * --base-uri can be passed more than once, e.g., for symlinked base URIs
   (/docs/current/api).
-
-* Pod::Simple must be patched with the patch
-  [here](https://rt.cpan.org/Ticket/Display.html?id=45839).
-
-* Supported Browsers:
-
-  + Firefox 3 (2?)
-  + IE 7 (8?)
-  + Safari 3-4
 
 =head1 Options
 
@@ -650,18 +645,19 @@ Add support for resizing the nav pane.
 
 =head1 Support
 
-This module is stored in an open GitHub repository,
-L<http://github.com/theory/pod-site/tree/>. Feel free to fork and contribute!
+This module is stored in an open L<GitHub
+repository|http://github.com/theory/pod-site/>. Feel free to fork and
+contribute!
 
-Please file bug reports at L<http://github.com/theory/pod-site/issues>.
+Found a bug? Please L<file a report|http://github.com/theory/pod-site/issues>!
 
 =head1 Author
 
-David Wheeler <david@justatheory.com>
+David E. Wheeler <david@justatheory.com>
 
 =head1 Copyright and License
 
-Copyright (c) 2004-2009 David Wheeler. Some Rights Reserved.
+Copyright (c) 2004-2010 David Wheeler. Some Rights Reserved.
 
 This module is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
