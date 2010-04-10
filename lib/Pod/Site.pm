@@ -41,10 +41,11 @@ sub new {
         %{ $params || {} }
     } => $class;
 
-    if (my @missing = grep { !$self->{$_} } qw(doc_root base_uri module_roots)) {
-        my $pl = @missing > 1 ? 's' : '';
-        my $last = pop @missing;
-        my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '') . " and $last" : $last;
+    if (my @req = grep { !$self->{$_} } qw(doc_root base_uri module_roots)) {
+        my $pl = @req > 1 ? 's' : '';
+        my $last = pop @req;
+        my $disp = @req ? join(', ', @req) . (@req > 1 ? ',' : '')
+            . " and $last" : $last;
         croak "Missing required parameters $disp";
     }
 
@@ -164,7 +165,6 @@ sub start_nav {
         qq{<meta name="base-uri" content="$_" />}
     } @{ $self->{base_uri} };
 
-
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -249,16 +249,19 @@ sub output {
             # Now recursively descend the tree.
             print STDERR "Outputting nav link\n" if $self->verbose > 2;
             print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-              qq{<li id="$class">$item\n}, $self->{base_space}, $self->{spacer} x ++$self->{indent}, "<ul>\n";
+              qq{<li id="$class">$item\n}, $self->{base_space},
+              $self->{spacer} x ++$self->{indent}, "<ul>\n";
             ++$self->{indent};
             $self->{uri} .= "$key/";
             $self->output($fh, $data);
-            print $fh $self->{base_space}, $self->{spacer} x --$self->{indent}, "</ul>\n",
-              $self->{base_space}, $self->{spacer} x --$self->{indent}, "</li>\n";
+            print $fh $self->{base_space}, $self->{spacer} x --$self->{indent},
+                "</ul>\n", $self->{base_space},
+                $self->{spacer} x --$self->{indent}, "</li>\n";
             $self->{uri} =~ s|$key/$||;
         } else {
             # It's a class. Create a link to it.
-            $self->_output_navlink($fh, $fn, $data, $class) unless $self->{seen}{$class};
+            $self->_output_navlink($fh, $fn, $data, $class)
+                unless $self->{seen}{$class};
         }
     }
 }
@@ -391,7 +394,9 @@ sub _find_module {
     my $self = shift;
     my $search = Pod::Site::Search->instance or return;
     my $bins   = $self->bin_files || {};
-    for my $mod (sort { lc $a cmp lc $b } keys %{ $search->instance->name2path }) {
+    for my $mod (sort {
+        lc $a cmp lc $b
+    } keys %{ $search->instance->name2path }) {
         return $mod unless $bins->{$mod};
     }
 }
@@ -419,7 +424,8 @@ sub version {
     return $self->{version} if $self->{version};
     require Module::Build::ModuleInfo;
     my $mod  = $self->main_module;
-    my $file = Pod::Site::Search->instance->name2path->{$mod} or die "Could not find $mod\n";
+    my $file = Pod::Site::Search->instance->name2path->{$mod}
+        or die "Could not find $mod\n";
     my $info = Module::Build::ModuleInfo->new_from_file( $file )
         or die "Could not find $file\n";
     return $self->{version} ||= $info->version;
@@ -478,23 +484,16 @@ sub _config {
     } grep { !$opts{$_} } qw(doc_root base_uri)) {
         my $pl = @missing > 1 ? 's' : '';
         my $last = pop @missing;
-        my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '') . " and $last" : $last;
+        my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '')
+            . " and $last" : $last;
         $self->pod2usage( '-message' => "Missing required $disp option$pl" );
     }
 
     # Check for one or more module roots.
-    unless (@ARGV) {
-        $self->pod2usage( '-message' => "Missing path to module root" );
-    }
+    $self->pod2usage( '-message' => "Missing path to module root" )
+        unless @ARGV;
 
     $opts{module_roots} = \@ARGV;
-
-    # Make sure we can find stuff to convert.
-    # $opts{bin} = File::Spec->catdir( $opts{module_root}, 'bin' );
-    # $opts{lib} = File::Spec->catdir( $opts{module_root}, 'lib' );
-    # $self->pod2usage(
-    #     '-message' => "$opts{module_root} has no 'lib' or 'bin' subdirectory"
-    # ) unless -d $opts{module_root} && (-d $opts{lib} || -d $opts{bin});
 
     # Modify options and set defaults as appropriate.
     for (@{ $opts{base_uri} }) { $_ .= '/' unless m{/$}; }
@@ -601,17 +600,6 @@ sub batch_mode_page_object_init {
 1;
 __END__
 
-=begin comment
-
-Fake-out Module::Build. Delete if it ever changes to support =head1 headers
-other than all uppercase.
-
-=head1 NAME
-
-Pod::Site - Build browsable HTML documentation for your app
-
-=end comment
-
 =head1 Name
 
 Pod::Site - Build browsable HTML documentation for your app
@@ -685,20 +673,7 @@ Please file bug reports at L<http://github.com/theory/pod-site/issues>.
 
 =head1 Author
 
-=begin comment
-
-Fake-out Module::Build. Delete if it ever changes to support =head1 headers
-other than all uppercase.
-
-=head1 AUTHOR
-
-=end comment
-
-=over
-
-=item David Wheeler <david@justatheory.com>
-
-=back
+David Wheeler <david@justatheory.com>
 
 =head1 Copyright and License
 

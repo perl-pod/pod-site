@@ -6,10 +6,10 @@ my $build = Module::Build->new(
     module_name        => 'Pod::Site',
     license            => 'perl',
     configure_requires => {
-        'Module::Build' => '0.34',
+        'Module::Build' => '0.35',
     },
     build_requires     => {
-        'Module::Build'    => '0.34',
+        'Module::Build'    => '0.35',
         'Test::File'       => 0,
         'Test::More'       => '0.88',
         'Test::MockModule' => '0.05',
@@ -33,9 +33,9 @@ my $build = Module::Build->new(
     },
     meta_merge         => {
         resources => {
-            homepage    => 'http://search.cpan.org/dist/Pod-Site/',
-            bugtracker  => 'http://github.com/theory/pod-site/issues/',
-            repository  => 'http://github.com/theory/pod-site/tree/',
+            homepage   => 'http://search.cpan.org/dist/Pod-Site/',
+            bugtracker => 'http://github.com/theory/pod-site/issues/',
+            repository => 'http://github.com/theory/pod-site/tree/',
         }
     },
 );
