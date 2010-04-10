@@ -25,7 +25,7 @@ my $build = Module::Build->new(
         'HTML::Entities'    => 0,
         'Module::Build'     => '0.34',
         'Object::Tiny'      => 0,
-        'Pod::Simple'       => '3.09',
+        'Pod::Simple'       => '3.12',
         'Pod::Usage'        => 0,
     },
     recommends         => {

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use File::Spec;
 use Carp;
-use Pod::Simple '3.08';
+use Pod::Simple '3.12';
 use HTML::Entities;
 use File::Path;
 use Object::Tiny qw(
@@ -540,6 +540,15 @@ use base 'Pod::Simple::XHTML';
 sub new {
     my $self = shift->SUPER::new;
     $self->index(1);
+
+    # Strip leading spaces from verbatim blocks equivalent to the indent of
+    # the first line.
+    $self->strip_verbatim_indent(sub {
+        my $lines = shift;
+        (my $indent = $lines->[0]) =~ s/\S.*//;
+        return $indent;
+    });
+
     return $self;
 }
 
@@ -570,31 +579,6 @@ sub html_header {
     <title>$title</title>
   </head>
   <body onload="resizeframe()" class="pod">};
-}
-
-# Future-proof against Pod::Simple::XHTML implementing
-# batch_mode_page_object_init(). It doesn't currently, but since
-# Pod::Simple::HTMLBatch calls it if it exists (as it does here in our
-# subclass), it might be added in the future, so be sure to call it if it gets
-# added.
-
-my $orig;
-BEGIN { $orig = __PACKAGE__->can('batch_mode_page_object_init') };
-
-sub batch_mode_page_object_init {
-    my $self = shift;
-
-    # Call the superclass method if it exists.
-    $orig->($self, @_) if $orig;
-
-    # Strip leading spaces from verbatim blocks equivalent to the indent of
-    # the first line.
-    $self->strip_verbatim_indent(sub {
-        my $lines = shift;
-        (my $indent = $lines->[0]) =~ s/\S.*//;
-        return $indent;
-    });
-    return $self;
 }
 
 1;
