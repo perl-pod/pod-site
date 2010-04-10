@@ -8,6 +8,9 @@ Hello - Hello World!
 
   my $hey = Hello->new;
 
+  say $hey->sup
+      if 1;
+
 =head1 DESCRIPTION
 
 Hello, this is the description.
@@ -19,6 +22,20 @@ This is all about the interface.
 =head3 C<new>
 
 Gotta cover the C<new()> method.
+
+=head1 SEE ALSO
+
+=over
+
+=item * L<Heya::Man>
+
+=item * L<Test::XPath>
+
+=item * L<Foo::Bar/NAME>
+
+=item * L</DESCRIPTION>
+
+=back
 
 =head1 AUTHOR
 

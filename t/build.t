@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 161;
+use Test::More tests => 182;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile rel2abs);
 use File::Path qw(remove_tree);
@@ -367,3 +367,105 @@ $tx->ok('/html/body/ul[2]', 'Should have second unordered list', sub {
         });
     }
 });
+
+# Verify that the XHTML output has been modified to our satisfaction.
+ok $tx = Test::XPath->new(
+    file => catfile($tmpdir, 'doc_root', 'Hello.html'),
+    is_html => 1
+), 'Load Hello.html';
+
+# Some basic sanity-checking.
+$tx->is( 'count(/html)',      1, 'Should have 1 html element' );
+$tx->is( 'count(/html/head)', 1, 'Should have 1 head element' );
+$tx->is( 'count(/html/body)', 1, 'Should have 1 body element' );
+$tx->is( 'count(/html/*)', 2, 'Should have 2 elements in html' );
+
+# Check the head element.
+$tx->is( 'count(/html/head/*)', 3, 'Should have 3 elements in head' );
+$tx->is(
+    '/html/head/meta[@http-equiv="Content-Type"]/@content',
+    'text/html; charset=UTF-8',
+    'Should have the content-type set in a meta header',
+);
+
+$tx->is( '/html/head/title', 'Hello', 'POD title should be corect');
+
+$tx->is(
+    '/html/head/meta[@name="generator"]/@content',
+    ref($ps) . ' ' . ref($ps)->VERSION,
+    'The generator meta tag should be present and correct'
+);
+
+# Check the body.
+$tx->is('/html/body/@class', 'pod', 'Body class should be "pod"');
+
+# Check that verbatim indentation is properly stripped.
+$tx->is(
+    '//pre/code',
+    "my \$hey = Hello->new;\n\nsay \$hey->sup\n    if 1;",
+    'Verbatim secton should have leading spaces stripped'
+);
+
+# Check that a local link is correct.
+$tx->is(
+    '//li[1]/p/a[@rel="section"]/@href',
+    '/docs/Heya/Man.html',
+    'Local link href should be correct',
+);
+
+$tx->is(
+    '//li[1]/p/a[@rel="section"]/@name',
+    'Heya::Man',
+    'Local link name should be correct',
+);
+
+$tx->is(
+    '//li[1]/p/a[@rel="section"]',
+    'Heya::Man',
+    'Local link text should be correct',
+);
+
+# Remote link should go to search.cpan.org.
+$tx->is(
+    '//li[2]/p/a[@href="http://search.cpan.org/perldoc?Test::XPath"]',
+    'Test::XPath',
+    'Remote link should go to search.cpan.org'
+);
+
+# Check that local link with section is correct.
+$tx->is(
+    '//li[3]/p/a[@rel="subsection"]/@href',
+    '/docs/Foo/Bar.html#NAME',
+    'Local link with section should have correct href',
+);
+
+$tx->is(
+    '//li[3]/p/a[@rel="subsection"]/@name',
+    'Foo::Bar',
+    'Local link with subsection name should be correct',
+);
+
+$tx->is(
+    '//li[3]/p/a[@rel="subsection"]',
+    '"NAME" in Foo::Bar',
+    'Local link with subsection text should be correct',
+);
+
+# Check that local section is correct.
+$tx->is(
+    '//li[4]/p/a[@rel="subsection"]/@href',
+    '#DESCRIPTION',
+    'Local subsection should have correct href',
+);
+
+$tx->is(
+    '//li[4]/p/a[@rel="subsection"]/@name',
+    'Hello',
+    'Local subsection name should be correct',
+);
+
+$tx->is(
+    '//li[4]/p/a[@rel="subsection"]',
+    '"DESCRIPTION"',
+    'Local subsection text should be correct',
+);

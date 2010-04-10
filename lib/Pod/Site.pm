@@ -319,6 +319,8 @@ sub batch_html {
     $batchconv->javascript_flurry(0);
     $batchconv->html_render_class('Pod::Site::XHTML');
     $batchconv->search_class('Pod::Site::Search');
+    our $BASE_URI;
+    local $BASE_URI = $self->base_uri->[0];
     $batchconv->batch_convert( $self->module_roots, $self->{doc_root} );
     return 1;
 }
@@ -556,7 +558,7 @@ sub start_L {
     my $search = Pod::Site::Search->instance
         or return $self->SUPER::start_L($self);
     my $to  = $flags->{to} || '';
-    my $url = $to ? $search->name2path->{$to} : '';
+    my $url = $to && $search->name2path->{$to} ? $Pod::Site::BASE_URI . join('/', split /::/ => $to) . '.html' : '';
     my $id  = $flags->{section};
     return $self->SUPER::start_L($flags) unless $url || ($id && !$to);
     my $rel = $id ? 'subsection' : 'section';
@@ -577,7 +579,7 @@ sub html_header {
     <meta name="generator" content="Pod::Site $version" />
     <title>$title</title>
   </head>
-  <body onload="resizeframe()" class="pod">};
+  <body class="pod">};
 }
 
 1;
