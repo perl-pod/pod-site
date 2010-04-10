@@ -396,22 +396,22 @@ sub _find_module {
     }
 }
 
-sub title {
+sub name {
     my $self = shift;
-    $self->{title} || $self->main_module;
+    $self->{name} || $self->main_module;
 }
 
 sub main_title {
     my $self = shift;
     return $self->{main_title} ||= join ' ',
-        $self->title,
+        $self->name,
         ( $self->versioned_title ? $self->version : () ),
         ( $self->label ? $self->label : () );
 }
 
 sub nav_header {
     my $self = shift;
-    $self->title . ($self->versioned_title ? ' ' . $self->version : '');
+    $self->name . ($self->versioned_title ? ' ' . $self->version : '');
 }
 
 sub version {
@@ -439,12 +439,12 @@ sub _config {
     );
 
     Getopt::Long::GetOptions(
-        'title|t=s'          => \$opts{title},
+        'name|n=s'           => \$opts{name},
         'doc-root|d=s'       => \$opts{doc_root},
         'base-uri|u=s@'      => \$opts{base_uri},
         'sample-module|s=s'  => \$opts{sample_module},
         'main-module|m=s'    => \$opts{main_module},
-        'versioned-title|n!' => \$opts{versioned_title},
+        'versioned-title|t!' => \$opts{versioned_title},
         'label|l=s'          => \$opts{label},
         'index-file|i=s'     => \$opts{index_file},
         'css-path|c=s'       => \$opts{css_path},
@@ -649,10 +649,22 @@ Doc Notes:
 
 =head1 Options
 
-  -V --verbose             Incremental verbose mode.
-  -h --help                Print a usage statement and exit.
-  -m --man                 Print the complete documentation and exit.
-  -v --version             Print the version number and exit.
+  -d --doc-root DIRECTORY   Browser document root
+  -u --base-uri URI         Browser base URI
+  -n --name NAME            Site name
+  -t --versioned-title      Include main module version number in title
+  -l --label LABEL          Label to append to site title
+  -m --main-module MODULE   Primary module for the documentation
+  -s --sample-module MODULE Module to use for sample links
+  -i --index-file FILENAME  File name for index file
+  -c --css-path PATH        Path to CSS file
+  -j --js-path PATH         Path to CSS file
+     --replace-css          Replace existing CSS file
+     --replace-js           Replace existing JavaScript file
+  -V --verbose              Incremental verbose mode.
+  -h --help                 Print a usage statement and exit.
+  -M --man                  Print the complete documentation and exit.
+  -v --version              Print the version number and exit.
 
 =head1 To Do
 

@@ -27,7 +27,7 @@ can_ok $CLASS, qw(
     css_path
     js_path
     verbose
-    title
+    name
     versioned_title
     label
     main_title
@@ -87,9 +87,9 @@ is $ps->index_file, 'index.html', 'Should have defautl index file';
 is $ps->verbose, 0, 'Should have default verbosity';
 is $ps->js_path, '', 'Should have default js_path';
 is $ps->css_path, '', 'Should have default css_path';
-is $ps->title, 'Foo::Bar', 'Should have title';
-is $ps->main_title, $ps->title, 'Should have main title';
-is $ps->nav_header, $ps->title, 'Should have nav header';
+is $ps->name, 'Foo::Bar', 'Should have name';
+is $ps->main_title, $ps->name, 'Should have main title';
+is $ps->nav_header, $ps->name, 'Should have nav header';
 is $ps->main_module, 'Foo::Bar', 'Should have main module';
 is $ps->sample_module, 'Foo::Bar', 'Should have sample module';
 is $ps->label, undef, 'Should have no label';
@@ -113,11 +113,11 @@ is_deeply $ps->module_roots, [$mod_root],
     'module_roots array should be retained';
 is_deeply $ps->base_uri, [$base_uri],
     'base_uri array should be retained';
-is $ps->title, 'Foo::Bar', 'Should have title';
+is $ps->name, 'Foo::Bar', 'Should have name';
 is $ps->label, 'API Browser', 'Should have label';
-is $ps->nav_header, $ps->title . ' ' . $ps->version,
+is $ps->nav_header, $ps->name . ' ' . $ps->version,
     'Nav header should have version';
-is $ps->main_title, $ps->title . ' ' . $ps->version . ' ' . $ps->label,
+is $ps->main_title, $ps->name . ' ' . $ps->version . ' ' . $ps->label,
     'Should have main title with label';
 
 my $path = "$$-" . __FILE__ . time;

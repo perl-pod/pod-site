@@ -21,7 +21,7 @@ my $base_uri = '/docs/';
 END { remove_tree if -d $tmpdir }
 
 my %config = (
-    title           => undef,
+    name            => undef,
     doc_root        => $doc_root,
     base_uri        => [$base_uri],
     module_roots    => [$mod_root],
@@ -120,7 +120,7 @@ LOTS: {
         '--index-file'    => 'default.htm',
         '--css-path'      => '/some/file.css',
         '--js-path'       => '/some/file.js',
-        '--title'         => 'Eat me',
+        '--name'          => 'Eat me',
         '--label'         => 'API Browser',
         '--replace-css',
         '--replace-js',
@@ -140,7 +140,7 @@ LOTS: {
         index_file      => 'default.htm',
         sample_module   => 'lib/Hello.pm',
         main_module     => 'lib/Bye.pm',
-        title           => 'Eat me',
+        name            => 'Eat me',
         label           => 'API Browser',
         versioned_title => 1,
         replace_css     => 1,
@@ -159,9 +159,9 @@ SHORT: {
         '-i' => 'default.htm',
         '-c' => '/some/file.css',
         '-j' => '/some/file.js',
-        '-t' => 'Eat me',
+        '-n' => 'Eat me',
         '-l' => 'API Browser',
-        '-n',
+        '-t',
         '-VVV',
         $mod_root,
     );
@@ -177,7 +177,7 @@ SHORT: {
         index_file      => 'default.htm',
         sample_module   => 'lib/Hello.pm',
         main_module     => 'lib/Bye.pm',
-        title           => 'Eat me',
+        name            => 'Eat me',
         label           => 'API Browser',
         versioned_title => 1,
         replace_css     => undef,

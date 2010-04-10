@@ -64,7 +64,7 @@ is_deeply $ps->bin_files, {
 
 is $ps->main_module,   'Foo::Bar', 'Should have a main module';
 is $ps->sample_module, 'Foo::Bar', 'Should have a sample module';
-is $ps->title,         'Foo::Bar', 'Should have default title';
+is $ps->name,          'Foo::Bar', 'Should have default name';
 
 # Check for JavaScript and CSS files.
 file_exists_ok catfile($doc_root, 'podsite.css'), 'CSS file should exist';
