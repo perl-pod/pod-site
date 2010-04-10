@@ -589,9 +589,6 @@ Pod::Site - Build browsable HTML documentation for your app
 
 =head1 Usage
 
-perl -Ilib bin/podsite --doc-root ~/Desktop/api --versioned-title --label 'API Browser' --replace-css --replace-js --base-uri /docs/2.0/api --base-uri /docs/current/api --name Bricolage ~/dev/bricolage/theory/lib ~/Dev/bricolage/theory/bin
-
-
   podsite --name App                      \
           --doc-root /path/to/output/html \
           --base-uri /browser/base/uri    \
