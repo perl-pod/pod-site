@@ -26,7 +26,7 @@ use Object::Tiny qw(
 use vars '$VERSION';
 $VERSION = '0.50';
 
-sub run {
+sub go {
     my $class = shift;
     $class->new( $class->_config )->build;
 }

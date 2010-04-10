@@ -3,4 +3,4 @@
 use strict;
 use warnings;
 use Pod::Site;
-Pod::Site->run;
+Pod::Site->go;

@@ -37,7 +37,7 @@ can_ok $CLASS, qw(
     mod_files
     bin_files
 
-    run
+    go
     new
     build
     sort_files
