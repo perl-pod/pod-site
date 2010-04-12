@@ -211,7 +211,6 @@ sub start_toc {
     EOF
 }
 
-
 sub output {
     my ($self, $fh, $tree) = @_;
     for my $key (sort keys %{ $tree }) {
@@ -986,12 +985,12 @@ structured like this:
 
   $mod_files = {
       'Moose.pm' => 'lib/Moose.pm',
-      'Moose' => {
+      'Moose'    => {
           'Meta' => {
-              'Class.pm' => 'lib/Moose/Meta/Class.pm',
+              'Class.pm'    => 'lib/Moose/Meta/Class.pm',
               'Instance.pm' => 'lib/Moose/Meta/Instance.pm',
-              'Method.pm' => 'lib/Moose/Meta/Method.pm',
-              'Role.pm' => 'lib/Moose/Meta/Role.pm',
+              'Method.pm'   => 'lib/Moose/Meta/Method.pm',
+              'Role.pm'     => 'lib/Moose/Meta/Role.pm',
           },
       },
  }

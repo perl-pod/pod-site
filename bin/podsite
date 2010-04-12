@@ -4,3 +4,8 @@ use strict;
 use warnings;
 use Pod::Site;
 Pod::Site->go;
+
+=head1 Name
+
+podsite - Build browsable HTML documentation for your app
+

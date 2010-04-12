@@ -2,7 +2,37 @@ use strict;
 use warnings;
 use Module::Build;
 
-my $build = Module::Build->new(
+my $class = Module::Build->subclass(
+    class => 'My::Builder',
+    code => q{
+        sub make_executable {
+            my $self = shift;
+            my $lib = File::Spec->catfile(qw(lib Pod Site.pm));
+            for my $file (@_) {
+                next unless File::Basename::basename($file) eq 'podsite';
+                open my $fh, '>>', $file or die "Cannot open $file: $!\n";
+                open my $pod, '<', $lib or die "Cannot open $lib: $!\n";
+                while (<$pod>) {
+                    if (/^=head1\s+(?:Usage|Options|Author|Copyright)\b/) {
+                        print $fh $_;
+                        while (<$pod>) {
+                            last if /^=/ && $_ !~ /^=head1\s+(?:Usage|Options|Author|Copyright)\b/;
+                            print $fh $_;
+                        }
+                    }
+                }
+
+                close $pod or die die "Cannot close $lib: $!\n";
+                close $fh or die die "Cannot close $file: $!\n";
+                last;
+            }
+            $self->SUPER::make_executable(@_);
+        }
+    },
+);
+
+my $build = $class->new(
+    class => 'Module::Build::PodSite',
     module_name        => 'Pod::Site',
     license            => 'perl',
     configure_requires => {
@@ -44,3 +74,5 @@ my $build = Module::Build->new(
 $build->add_build_element('js');
 $build->add_build_element('css');
 $build->create_build_script;
+
+
