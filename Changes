@@ -3,6 +3,10 @@ Revision history for Perl extension Pod::Site.
 0.50
       - Changed name from Pod::Browser and pod_browser to Pod::Site and
         podsite.
+      - Completely rewritten using pure CSS and JavaScript/jQuery solution, as
+        well as reliance on more recent versions of Pod::Simple that have been
+        updated to support the thigns we needed. The previous unreleased
+        versions are hardly worth noting anymore.
 
 0.30  [Unreleased]
       - Added --app-name to the docs & make it required. Patch from Dave
