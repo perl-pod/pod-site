@@ -1,6 +1,6 @@
 Revision history for Perl extension Pod::Site.
 
-0.50
+0.50  2010-04-12T21:08:39
       - Changed name from Pod::Browser and pod_browser to Pod::Site and
         podsite.
       - Completely rewritten using pure CSS and JavaScript/jQuery solution, as
