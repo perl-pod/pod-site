@@ -628,7 +628,13 @@ without the question-mark:
 
   http://www.example.com/docs/MooseX::Declare
 
-XXX Fill this in.
+Getting this to work is simple: Just have your Web server send 404s to the
+index page. If your base URI is F</docs/api>, for example, in Apache's
+F<httpd.conf> you can just do this:
+
+ <Location /docs/api>
+   ErrorDocument 404 /docs/current/api/index.html
+ </Location>
 
 =head1 Options
 
