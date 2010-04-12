@@ -48,7 +48,7 @@ DEFAULTS: {
 ERRS: {
     my $mock = Test::MockModule->new($CLASS);
     my @args;
-    $mock->mock(pod2usage => sub { @args = @_} );
+    $mock->mock(_pod2usage => sub { @args = @_} );
     local @ARGV = ($mod_root);
     ok $CLASS->_config, 'configure with no options';
     is_deeply \@args, [
@@ -93,7 +93,7 @@ MULTIPLES: {
 HELP: {
     my $mock = Test::MockModule->new($CLASS);
     my @args;
-    $mock->mock(pod2usage => sub { @args = @_} );
+    $mock->mock(_pod2usage => sub { @args = @_} );
     local @ARGV = ('--doc-root', $doc_root, '--base-uri', $base_uri, $mod_root, '--help' );
     ok $CLASS->_config, 'Ask for help';
     is_deeply \@args, [ $CLASS, '-exitval', 0 ], 'Should have been helped';
@@ -205,7 +205,7 @@ POD2USAGE: {
     my $mock = Test::MockModule->new('Pod::Usage');
     my @args;
     $mock->mock(pod2usage => sub { @args = @_} );
-    ok $CLASS->pod2usage('hello'), 'Run pod2usage';
+    ok $CLASS->_pod2usage('hello'), 'Run _pod2usage';
     is_deeply \@args, [
         '-verbose'  => 99,
         '-sections' => '(?i:(Usage|Options))',

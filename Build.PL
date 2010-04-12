@@ -29,7 +29,8 @@ my $build = Module::Build->new(
         'Pod::Usage'        => 0,
     },
     recommends         => {
-        'Test::Pod'      => '1.20',
+        'Test::Pod'           => '1.41',
+        'Test::Pod::Coverage' => '1.06',
     },
     meta_merge         => {
         resources => {

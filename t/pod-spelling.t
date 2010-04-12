@@ -15,5 +15,6 @@ jQuery
 symlinked
 nav
 uri
-
-
+namespaces
+toolchain
+versioned

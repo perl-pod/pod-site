@@ -109,7 +109,7 @@ $tx->is(
 );
 $tx->is(
     '/html/head/title',
-    $ps->main_title,
+    $ps->title,
     'Title should be corect'
 );
 $tx->is(
@@ -285,7 +285,7 @@ $tx->is(
     'Should have the content-type set in a meta header',
 );
 
-$tx->is( '/html/head/title', $ps->main_title, 'Title should be corect');
+$tx->is( '/html/head/title', $ps->title, 'Title should be corect');
 
 $tx->is(
     '/html/head/meta[@name="generator"]/@content',
@@ -299,7 +299,7 @@ $tx->is( 'count(/html/body/*)', 7, 'Should have 7 elements in body' );
 # Headers.
 $tx->is( 'count(/html/body/h1)', 2, 'Should have 2 h1 elements in body' );
 
-$tx->is( '/html/body/h1[1]', $ps->main_title, 'Should have title in first h1 header');
+$tx->is( '/html/body/h1[1]', $ps->title, 'Should have title in first h1 header');
 $tx->is(
     '/html/body/h1[2]', 'Instructions',
     'Should have "Instructions" in second h1 header'

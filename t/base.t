@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 34;
+use Test::More tests => 32;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir);
 use File::Path qw(remove_tree);
@@ -30,7 +30,7 @@ can_ok $CLASS, qw(
     name
     versioned_title
     label
-    main_title
+    title
     nav_header
     replace_css
     replace_js
@@ -54,7 +54,6 @@ can_ok $CLASS, qw(
     main_module
     sample_module
     version
-    pod2usage
 );
 
 isa_ok 'Pod::Site::Search', 'Pod::Simple::Search';
@@ -88,7 +87,7 @@ is $ps->verbose, 0, 'Should have default verbosity';
 is $ps->js_path, '', 'Should have default js_path';
 is $ps->css_path, '', 'Should have default css_path';
 is $ps->name, 'Foo::Bar', 'Should have name';
-is $ps->main_title, $ps->name, 'Should have main title';
+is $ps->title, $ps->name, 'Should have main title';
 is $ps->nav_header, $ps->name, 'Should have nav header';
 is $ps->main_module, 'Foo::Bar', 'Should have main module';
 is $ps->sample_module, 'Foo::Bar', 'Should have sample module';
@@ -117,7 +116,7 @@ is $ps->name, 'Foo::Bar', 'Should have name';
 is $ps->label, 'API Browser', 'Should have label';
 is $ps->nav_header, $ps->name . ' ' . $ps->version,
     'Nav header should have version';
-is $ps->main_title, $ps->name . ' ' . $ps->version . ' ' . $ps->label,
+is $ps->title, $ps->name . ' ' . $ps->version . ' ' . $ps->label,
     'Should have main title with label';
 
 my $path = "$$-" . __FILE__ . time;
@@ -130,14 +129,3 @@ eval { $CLASS->new({
 ok $err = $@, 'Should catch exception';
 like $err, qr{The module root \E$path\Q does not exist},
     'Should be non exist error';
-
-$path = 'Build.PL';
-eval { $CLASS->new({
-    doc_root     => $doc_root,
-    base_uri     => $base_uri,
-    module_roots => $path,
-}) };
-
-ok $err = $@, 'Should catch another exception';
-like $err, qr{The module root \E$path\Q is not a directory},
-    'Should be not directory error';

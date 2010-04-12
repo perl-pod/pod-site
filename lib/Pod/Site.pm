@@ -54,7 +54,6 @@ sub new {
         : ( $self->{module_roots} = [$self->{module_roots}] );
     for my $path (@{ $roots }) {
         croak "The module root $path does not exist\n" unless -e $path;
-        croak "The module root $path is not a directory\n" unless -d $path;
     }
 
     $self->{base_uri} = [$self->{base_uri}] unless ref $self->{base_uri};
@@ -92,7 +91,7 @@ sub build {
     $self->output_bin($idx_fh);
     $self->finish_nav($idx_fh);
     $self->finish_toc($toc_fh);
-    $self->copy_etc();
+    $self->copy_etc;
 
     # Close up shop.
     close $idx_fh or die qq{Could not close "$idx_file": $!\n};
@@ -140,24 +139,11 @@ sub sort_files {
     $self->{bin_files} = \%bins;
 }
 
-sub _set_mod {
-    my ($mods, $mod, $file) = @_;
-    if ($mod =~ /::/) {
-        my @names = split /::/ => $mod;
-        my $data = $mods->{shift @names} ||= {};
-        my $lln = pop @names;
-        for (@names) { $data = $data->{$_} ||= {} }
-        $data->{"$lln.pm"} = $file;
-    } else {
-        $mods->{"$mod.pm"} = $file;
-    }
-}
-
 sub start_nav {
     my ($self, $fh) = @_;
     my $class   = ref $self;
     my $version = __PACKAGE__->VERSION;
-    my $title   = encode_entities $self->main_title;
+    my $title   = encode_entities $self->title;
     my $head    = encode_entities $self->nav_header;
 
     print STDERR "Starting site navigation file\n" if $self->verbose > 1;
@@ -190,7 +176,7 @@ sub start_toc {
 
     my $sample  = encode_entities $self->sample_module;
     my $version = Pod::Site->VERSION;
-    my $title   = encode_entities $self->main_title;
+    my $title   = encode_entities $self->title;
 
     print STDERR "Starting browser TOC file\n" if $self->verbose > 1;
     print $fh _udent( <<"    EOF");
@@ -338,31 +324,6 @@ sub copy_etc {
     }
 }
 
-sub _udent {
-    my $string = shift;
-    $string =~ s/^[ ]{4}//gm;
-    return $string;
-}
-
-sub _output_navlink {
-    my ($self, $fh, $key, $fn, $class, $no_link, $desc) = @_;
-
-    $desc ||= $self->get_desc($class, $fn);
-    $desc = "—$desc" if $desc;
-
-    # Output the Tree Browser Link.
-    print "Outputting $class nav link\n" if $self->{verbose} > 2;
-    print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
-      qq{<li id="$class"><a href="$self->{uri}$key.html">$key</a></li>\n}
-      unless $no_link;
-
-    # Output the TOC link.
-    print "Outputting $class TOC link\n" if $self->{verbose} > 2;
-    print {$self->{toc_fh}} $self->{base_space}, $self->{spacer},
-      qq{<li><a href="$self->{uri}$key.html" rel="section" name="$class">$class</a>$desc</li>\n};
-    return 1;
-}
-
 sub get_desc {
     my ($self, $what, $file) = @_;
 
@@ -391,25 +352,14 @@ sub main_module {
     $self->{main_module} ||= $self->_find_module;
 }
 
-sub _find_module {
-    my $self = shift;
-    my $search = Pod::Site::Search->instance or return;
-    my $bins   = $self->bin_files || {};
-    for my $mod (sort {
-        lc $a cmp lc $b
-    } keys %{ $search->instance->name2path }) {
-        return $mod unless $bins->{$mod};
-    }
-}
-
 sub name {
     my $self = shift;
     $self->{name} || $self->main_module;
 }
 
-sub main_title {
+sub title {
     my $self = shift;
-    return $self->{main_title} ||= join ' ',
+    return $self->{title} ||= join ' ',
         $self->name,
         ( $self->versioned_title ? $self->version : () ),
         ( $self->label ? $self->label : () );
@@ -430,6 +380,18 @@ sub version {
     my $info = Module::Build::ModuleInfo->new_from_file( $file )
         or die "Could not find $file\n";
     return $self->{version} ||= $info->version;
+}
+
+sub _pod2usage {
+    shift;
+    require Pod::Usage;
+    Pod::Usage::pod2usage(
+        '-verbose'  => 99,
+        '-sections' => '(?i:(Usage|Options))',
+        '-exitval'  => 1,
+        '-input'    => __FILE__,
+        @_
+    );
 }
 
 sub _config {
@@ -462,10 +424,10 @@ sub _config {
         'help|h'             => \$opts{help},
         'man|M'              => \$opts{man},
         'version|v'          => \$opts{version},
-    ) or $self->pod2usage;
+    ) or $self->_pod2usage;
 
     # Handle documentation requests.
-    $self->pod2usage(
+    $self->_pod2usage(
         ( $opts{man} ? ( '-sections' => '.+' ) : ()),
         '-exitval' => 0,
     ) if $opts{help} or $opts{man};
@@ -487,11 +449,11 @@ sub _config {
         my $last = pop @missing;
         my $disp = @missing ? join(', ', @missing) . (@missing > 1 ? ',' : '')
             . " and $last" : $last;
-        $self->pod2usage( '-message' => "Missing required $disp option$pl" );
+        $self->_pod2usage( '-message' => "Missing required $disp option$pl" );
     }
 
     # Check for one or more module roots.
-    $self->pod2usage( '-message' => "Missing path to module root" )
+    $self->_pod2usage( '-message' => "Missing path to module root" )
         unless @ARGV;
 
     $opts{module_roots} = \@ARGV;
@@ -502,16 +464,53 @@ sub _config {
     return \%opts;
 }
 
-sub pod2usage {
-    shift;
-    require Pod::Usage;
-    Pod::Usage::pod2usage(
-        '-verbose'  => 99,
-        '-sections' => '(?i:(Usage|Options))',
-        '-exitval'  => 1,
-        '-input'    => __FILE__,
-        @_
-    );
+sub _set_mod {
+    my ($mods, $mod, $file) = @_;
+    if ($mod =~ /::/) {
+        my @names = split /::/ => $mod;
+        my $data = $mods->{shift @names} ||= {};
+        my $lln = pop @names;
+        for (@names) { $data = $data->{$_} ||= {} }
+        $data->{"$lln.pm"} = $file;
+    } else {
+        $mods->{"$mod.pm"} = $file;
+    }
+}
+
+sub _udent {
+    my $string = shift;
+    $string =~ s/^[ ]{4}//gm;
+    return $string;
+}
+
+sub _output_navlink {
+    my ($self, $fh, $key, $fn, $class, $no_link, $desc) = @_;
+
+    $desc ||= $self->get_desc($class, $fn);
+    $desc = "—$desc" if $desc;
+
+    # Output the Tree Browser Link.
+    print "Outputting $class nav link\n" if $self->{verbose} > 2;
+    print $fh $self->{base_space}, $self->{spacer} x $self->{indent},
+      qq{<li id="$class"><a href="$self->{uri}$key.html">$key</a></li>\n}
+      unless $no_link;
+
+    # Output the TOC link.
+    print "Outputting $class TOC link\n" if $self->{verbose} > 2;
+    print {$self->{toc_fh}} $self->{base_space}, $self->{spacer},
+      qq{<li><a href="$self->{uri}$key.html" rel="section" name="$class">$class</a>$desc</li>\n};
+    return 1;
+}
+
+sub _find_module {
+    my $self = shift;
+    my $search = Pod::Site::Search->instance or return;
+    my $bins   = $self->bin_files || {};
+    for my $mod (sort {
+        lc $a cmp lc $b
+    } keys %{ $search->instance->name2path }) {
+        return $mod unless $bins->{$mod};
+    }
 }
 
 ##############################################################################
@@ -589,6 +588,11 @@ __END__
 
 Pod::Site - Build browsable HTML documentation for your app
 
+=head1 Synopsis
+
+ use Pod::Site;
+ Pod::Site->go;
+
 =head1 Usage
 
   podsite --name App                      \
@@ -608,10 +612,24 @@ Browser|http://www.bricolagecms.org/docs/current/api/> to see a sample
 documentation site in action. The generated documentation site supports
 Safari, Firefox, and IE7 and up.
 
-Doc Notes:
+=head2 Configuration
 
-* --base-uri can be passed more than once, e.g., for symlinked base URIs
-  (/docs/current/api).
+Sites generated by Pod::Site are static HTML sites with all interactivity
+powered by CSS and jQuery. It does its best to create links to documents
+within the site, and for Pod outside the site it links to L<CPAN
+search|http://search.cpan.org/>.
+
+You can specify links directly to a specific document on your site by simply
+adding a module name to the URL after a question mark. An example:
+
+  http://www.example.com/docs/?MooseX::Declare
+
+There is one server configuration that you'll want to make to allow links
+without the question-mark:
+
+  http://www.example.com/docs/MooseX::Declare
+
+XXX Fill this in.
 
 =head1 Options
 
@@ -632,6 +650,367 @@ Doc Notes:
   -M --man                  Print the complete documentation and exit.
   -v --version              Print the version number and exit.
 
+=head1 Class Interface
+
+=head2 Class Method
+
+=head3 C<go>
+
+  Pod::Site->go;
+
+Called from C<podsite>, this class method parses command-line options in
+C<@ARGV>, passes them to the constructor, and builds the site.
+
+=head2 Constructor
+
+=head3 C<new>
+
+  my $ps = Pod::Site->new(\%params);
+
+Constructs and returns a Pod::Site object. The supported parameters are:
+
+=over
+
+=item C<module_roots>
+
+An array reference of directories to search for Pod files, or for the paths of
+Pod files themselves. These files and directories will be searched for the Pod
+documentation to build the browser.
+
+=item C<doc_root>
+
+Path to a directory to use as the site document root. This directory will be
+created if it does not already exist.
+
+=item C<base_uri>
+
+Base URI for the Pod site. For example, if your documentation will be served
+from F</docs/2.0/api>, then that would be the base URI for the site.
+
+May be an array reference of base URIs. This is useful if your Pod site will
+be served from more than one URL. This is common for versioned documentation,
+where you might have docs in F</docs/2.0/api> and a symlink to that directory
+from F</docs/current/api>. This parameter is important to get links from one
+page to another within the site to work properly.
+
+=item C<name>
+
+The name of the site. Defaults to the name of the main module.
+
+=item C<versioned_title>
+
+If true, the version of the main module will be included in the site title.
+
+=item C<label>
+
+Optional label to append to the site title. Something like "API Browser" is
+recommended.
+
+=item C<main_module>
+
+The main module defining the site. For example, if you were building a
+documentation site for the L<Moose>, L<Class::MOP>, and C<MooseX> namespaces,
+the main module would be "Moose". Defaults to the first module found when all
+module names are sorted in alphabetical order.
+
+=item C<sample_module>
+
+Module to use in the example documentation links in the table of contents.
+This is the main page displayed on the site
+
+=item C<index_file>
+
+Name of the site index file. Defaults to F<index.html>, but you might need it
+to be, e.g., F<default.html> if you were deploying to a Windows server.
+
+=item C<css_path>
+
+Path to CSS files. Defaults to the base URI.
+
+=item C<js_path>
+
+Path to JavaScript files. Defaults to the base URI.
+
+=item C<replace_css>
+
+=item C<replace_js>
+
+If you're building a new site over an old site, by default Pod::Site will not
+replace the CSS and JavaScript files, seeing as you might have changed them.
+If you want it to replace them, pass a true value for this parameter.
+
+If you're building a new site over an old site, by default Pod::Site will not
+replace the CSS and JavaScript files, seeing as you might have changed them.
+If you want it to replace them (and in general you ought to), pass a true
+value for these parameters.
+
+=item C<verbose>
+
+Pass a value greater than 0 for verbose output. The higher the number, the
+more verbose (up to 3).
+
+=back
+
+=head1 Instance Interface
+
+=head2 Instance Methods
+
+=head3 C<build>
+
+  $ps->build;
+
+Builds the Pod::Site. This is likely the only instance method you'll ever
+need. In summary, it:
+
+=over
+
+=item *
+
+Searches through the module roots for Pod files (modules and scripts) using
+L<Pod::Simple::Search>
+
+=item *
+
+Creates HTML files for all the files found using L<Pod::Simple::HTMLBatch> and
+a custom subclass of L<Pod::Simple::XHTML>
+
+=item *
+
+Iterates over the list of files to create the index with the navigation tree
+and the table of contents page (F<toc.html>).
+
+=back
+
+=head3 C<sort_files>
+
+ $ps->sort_files;
+
+Iterates through the Pod files found by L<Pod::Simple::Search> and sorts them
+into two categories: modules and scripts. All appear in the navigation tree,
+but scripts are listed under "bin" and are not otherwise in tree form.
+
+=head3 C<start_nav>
+
+  $ps->start_nav($filehandle);
+
+Starts the HTML for the navigation document, writing the output to $filehandle.
+
+=head3 C<start_toc>
+
+  $ps->start_toc($filehandle);
+
+Starts the HTML for the table of contents document, writing the output to
+$filehandle.
+
+=head3 C<output>
+
+  $ps->output($filehandle, $tree);
+
+Writes the content of the module tree to the navigation document via
+$filehandle. The $tree argument contains the tree. This method is called
+recursively as it descends through the tree to create the navigation tree.
+
+=head3 C<output_bin>
+
+  $ps->output_bin($filehandle);
+
+Outputs the list of script files to the table of contents document via
+$filehandle.
+
+=head3 C<finish_nav>
+
+  $ps->finish_nav($filehandle);
+
+Finishes the HTML for the navigation document, writing the output to
+$filehandle.
+
+=head3 C<finish_toc>
+
+  $ps->finish_toc($filehandle);
+
+Finishes the HTML for the table of contents document, writing the output to
+$filehandle.
+
+=head3 C<batch_html>
+
+  $ps->batch_html;
+
+Does the work of invoking L<Pod::Simple::HTMLBatch> to look for Pod files and
+write out the corresponding HTML files for each.
+
+=head3 C<copy_etc>
+
+  $ps->copy_etc;
+
+Copies the additional files, F<podsite.js> and F<podsite.css> to the document
+root. These files are necessary to the functioning of the site.
+
+=head3 C<get_desc>
+
+  $ps->get_desc( $module, $file);
+
+Parses the Pod in $file to find the description of $module. This is the text
+after the hyphen in the `=head1 Name` section of the Pod, often called the
+"abstract" by toolchain modules like L<Module::Build>.
+
+=head2 Instance Accessors
+
+=head3 C<main_module>
+
+  my $mod = $ps->main_module;
+
+Returns the name of the main module as specified by the C<main_module>
+parameter to C<new()> or, if none was specified, as first module in the list
+of found modules, sorted case-insensitively.
+
+=head3 C<sample_module>
+
+  my $mod = $ps->sample_module;
+
+The name of the module to use for the sample links in the table of contents.
+Defaults to C<main_module>.
+
+=head3 C<name>
+
+  my $name = $ps->name;
+
+Returns the name of the site. Defaults to C<main_module>.
+
+=head3 C<label>
+
+  my $label = $ps->label;
+
+Returns the optional label to append to the site title. None by default.
+
+=head3 C<title>
+
+  my $title = $ps->title;
+
+Returns the title of the site. This will be constructed from C<name> and
+C<label> and, if C<versioned_title> is true, the title of the main module.
+
+=head3 C<nav_header>
+
+  my $header = $ps->nav_header;
+
+Returns the header used at the top of the navigation. This will be constructed
+from C<name> and, if C<versioned_title> is true, the title of the main module.
+
+=head3 C<versioned_title>
+
+  my $versioned_title = $ps->versioned_title;
+
+Returns true if the version is to be included in the site title, and false if
+it is not, as specified via the C<versioned_title> parameter to C<new()>.
+
+=head3 C<version>
+
+  my $version = $ps->version;
+
+Returns the version number of the main module.
+
+=head3 C<module_roots>
+
+  my $roots = $ps->module_roots;
+
+Returns an array reference of the directories and files passed to the
+C<module_roots> parameter to C<new()>.
+
+=head3 C<doc_root>
+
+  my $doc_root = $ps->doc_root;
+
+Returns the path to the document root specified via the C<doc_root> parameter
+to C<new()>.
+
+=head3 C<base_uri>
+
+  my $base_uri = $ps->base_uri;
+
+Returns the value of the base URI as specified via the C<base_uri> parameter
+to C<new()>.
+
+=head3 C<index_file>
+
+  my $index_file = $ps->index_file;
+
+Returns the value of index files as specified via the C<index_file> parameter
+to C<new()>. Defaults to F<index.html>.
+
+=head3 C<css_path>
+
+  my $css_path = $ps->css_path;
+
+Returns the URI path for CSS files as specified via the C<css_path> parameter
+to C<new()>. Defaults to an empty string, meaning it will be fetched from the
+directory relative to the current URL. This is the recommended value as it
+allows any URL under the base URL to work, such as F</docs/MooseX::Declare>,
+enabled by the L<Web server configuration|/Configuration>.
+
+=head3 C<js_path>
+
+  my $js_path = $ps->js_path;
+
+Returns the URI path for JavaScript files as specified via the C<js_path>
+parameter to C<new()>. Defaults to an empty string, meaning it will be fetched
+from the directory relative to the current URL. This is the recommended value
+as it allows any URL under the base URL to work, such as
+F</docs/MooseX::Declare>, enabled by the L<Web server
+configuration|/Configuration>.
+
+=head3 C<replace_css>
+
+  my $replace_css = $ps->replace_css;
+
+Returns true if Pod::Site should replace an existing F<podsite.css> file when
+regenerating a site, as specified via the C<replace_css> parameter to
+C<new()>.
+
+=head3 C<replace_js>
+
+  my $replace_js = $ps->replace_js;
+
+Returns true if Pod::Site should replace an existing F<podsite.js> file when
+regenerating a site, as specified via the C<replace_js> parameter to C<new()>.
+
+=head3 C<mod_files>
+
+  my $mod_files = $ps->mod_files;
+
+Returns a tree structure containing all the module files with Pod found by
+L<Pod::Simple::Search>. The structure has file base names as keys and full
+file names as values. For nested structures, the keys are the last part of a
+module name and the values are an array of more file names and module
+branches. For example, a partial tree of module files for Moose might be
+structured like this:
+
+  $mod_files = {
+      'Moose.pm' => 'lib/Moose.pm',
+      'Moose' => {
+          'Meta' => {
+              'Class.pm' => 'lib/Moose/Meta/Class.pm',
+              'Instance.pm' => 'lib/Moose/Meta/Instance.pm',
+              'Method.pm' => 'lib/Moose/Meta/Method.pm',
+              'Role.pm' => 'lib/Moose/Meta/Role.pm',
+          },
+      },
+ }
+
+=head3 C<bin_files>
+
+  my $bin_files = $ps->bin_files;
+
+Returns a tree structure containing all the scripts with Pod found by
+L<Pod::Simple::Search>. The structure has file names as keys and full file
+names as values.
+
+=head3 C<verbose>
+
+  my $verbose = $ps->verbose;
+
+Returns the value passed for the C<verbose> parameter to C<new()>. Defaults to
+0.
+
 =head1 To Do
 
 =over
@@ -641,8 +1020,6 @@ Doc Notes:
 Add support for resizing the nav pane.
 
 =back
-
-=head1 Support
 
 This module is stored in an open L<GitHub
 repository|http://github.com/theory/pod-site/>. Feel free to fork and
