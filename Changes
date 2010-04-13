@@ -4,6 +4,7 @@ Revision history for Perl extension Pod::Site.
       - Updated build to add Pod to `bin/podsite` when creating the
         distribution, rather than at install time. This should allow the
         documentation to also show up on Perldoc sites.
+      - Updated the `README`.
 
 0.50  2010-04-12T21:08:39
       - Changed name from Pod::Browser and pod_browser to Pod::Site and
