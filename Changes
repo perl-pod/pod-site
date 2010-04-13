@@ -1,5 +1,7 @@
 Revision history for Perl extension Pod::Site.
 
+0.52
+
 0.51  2010-04-13T16:24:24
       - Updated build to add Pod to `bin/podsite` when creating the
         distribution, rather than at install time. This should allow the
