@@ -1024,6 +1024,11 @@ Returns the value passed for the C<verbose> parameter to C<new()>. Defaults to
 
 Add support for resizing the nav pane.
 
+=item *
+
+Allow right and middle clicks on nav window links to copy links or open them
+in a new Window (L<Issue #1|http://github.com/theory/pod-site/issues/1>).
+
 =back
 
 This module is stored in an open L<GitHub
