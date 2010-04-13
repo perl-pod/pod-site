@@ -1,6 +1,8 @@
 Revision history for Perl extension Pod::Site.
 
 0.52
+      - Require File::Path 2.07, as that seems to be the earliest release
+        supporting `remove_tree()`.
 
 0.51  2010-04-13T16:24:24
       - Updated build to add Pod to `bin/podsite` when creating the
