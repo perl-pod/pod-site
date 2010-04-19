@@ -75,15 +75,8 @@ body > #nav {
 }
 
 #doc ul, #doc ol {
-  list-style-position: inside;
   padding-left: 1em;
   margin-bottom: 0;
-}
-#doc li {
-  text-indent: -1em;
-}
-#doc li p {
-   text-indent: 0;
 }
 #doc h1, #doc h2 {
   font-family: helvetica, arial, sans-serif;
