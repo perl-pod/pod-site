@@ -32,3 +32,4 @@
 # Avoid spelling test.
 pod-spelling.t$
 ^MYMETA.yml$
+^MYMETA\.json$
