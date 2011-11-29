@@ -8,5 +8,7 @@ _build
 cover_db/
 Pod-Site-*
 META.yml
+META.json
 MYMETA.yml
+MYMETA.json
 MANIFEST
