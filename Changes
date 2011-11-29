@@ -1,6 +1,6 @@
 Revision history for Perl extension Pod::Site.
 
-0.53
+0.53  2011-11-29T17:44:06Z
       - Fixed a CSS issue where a `<pre>` block inside a list was getting the
         first letter of its first line chopped off. Also, on Firefox, the text
         of list items was appearing a line below the bullet, which was on a
