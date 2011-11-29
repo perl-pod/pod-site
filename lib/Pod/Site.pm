@@ -332,7 +332,7 @@ sub get_desc {
     # Cribbed from Module::Build::PodParser.
     while (<$fh>) {
         next unless /^=(?!cut)/ .. /^=cut/;  # in POD
-        last if ($desc) = /^  (?:  [a-z:]+  \s+ - \s+  )  (.*\S)  /ix;
+        last if ($desc) = /^  (?:  [a-z0-9:]+  \s+ - \s+  )  (.*\S)  /ix;
     }
 
     close $fh or die "Cannot close $file: $!\n";
