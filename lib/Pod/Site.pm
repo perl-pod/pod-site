@@ -327,13 +327,15 @@ sub get_desc {
     my ($self, $what, $file) = @_;
 
     open my $fh, '<', $file or die "Cannot open $file: $!\n";
-    my $desc;
+    my ($desc, $encoding);
     local $_;
     # Cribbed from Module::Build::PodParser.
-    while (<$fh>) {
+    while (not ($desc and $encoding) and $_ = <$fh>) {
         next unless /^=(?!cut)/ .. /^=cut/;  # in POD
-        last if ($desc) = /^  (?:  [a-z:]+  \s+ - \s+  )  (.*\S)  /ix;
+        ($desc) = /^  (?:  [a-z0-9:]+  \s+ - \s+  )  (.*\S)  /ix unless $desc;
+        ($encoding) = /^=encoding\s+(.*\S)/ unless $encoding;
     }
+    Encode::from_to($desc, $encoding, 'UTF-8') if $desc && $encoding;
 
     close $fh or die "Cannot close $file: $!\n";
     print "$what has no POD or no description in a =head1 NAME section\n"
