@@ -6,6 +6,10 @@ Revision history for Perl extension Pod::Site.
         of list items was appearing a line below the bullet, which was on a
         horizontal line by itself. Thanks to Phillip Smith and Andrew Dunstan
         for the reports.
+      - Added encoding detection to the description parsing in `get_desc()`.
+        Thanks to Masahiro Honma for the pull request.
+      - Properly parse class names with digits in them. Thanks to Masahiro
+        Honma for the pull request.
 
 0.52  2010-04-13T21:56:53
       - Require File::Path 2.07, as that seems to be the earliest release
