@@ -314,7 +314,7 @@ sub copy_etc {
     my $self = shift;
     require File::Copy;
     (my $from = __FILE__) =~ s/[.]pm$//;
-    for my $ext qw(css js) {
+    for my $ext (qw(css js)) {
         my $dest = File::Spec->catfile($self->{doc_root}, "podsite.$ext");
         File::Copy::copy(
             File::Spec->catfile( $from, "podsite.$ext" ),
