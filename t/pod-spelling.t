@@ -19,3 +19,8 @@ namespaces
 toolchain
 versioned
 podsite
+JavaScript
+API
+Bricolage
+CPAN
+Firefox
