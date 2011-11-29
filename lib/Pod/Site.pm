@@ -24,7 +24,7 @@ use Object::Tiny qw(
 );
 
 use vars '$VERSION';
-$VERSION = '0.53';
+$VERSION = '0.54';
 
 sub go {
     my $class = shift;
