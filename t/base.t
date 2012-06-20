@@ -127,5 +127,5 @@ eval { $CLASS->new({
 }) };
 
 ok $err = $@, 'Should catch exception';
-like $err, qr{The module root \E$path\Q does not exist},
+like $err, qr{The module root \Q$path\E does not exist},
     'Should be non exist error';
