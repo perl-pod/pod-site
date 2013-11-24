@@ -68,7 +68,7 @@ my $build = $class->new(
         resources => {
             homepage   => 'http://search.cpan.org/dist/Pod-Site/',
             bugtracker => 'http://github.com/theory/pod-site/issues/',
-            repository => 'http://github.com/theory/pod-site/tree/',
+            repository => 'http://github.com/theory/pod-site',
         }
     },
 );
