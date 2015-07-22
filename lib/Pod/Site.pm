@@ -13,6 +13,7 @@ use Object::Tiny qw(
     base_uri
     index_file
     css_path
+    favicon_uri
     js_path
     versioned_title
     replace_css
@@ -151,6 +152,12 @@ sub start_nav {
         qq{<meta name="base-uri" content="$_" />}
     } @{ $self->{base_uri} };
 
+    my $favicon = '';
+    if (my $uri = $self->{favicon_uri}) {
+       my $type = $uri;
+       $type =~ s/.*\.([^.]+)/$1/;
+       $favicon = qq(<link rel="icon" type="img/$type" href="$uri">);
+    }
     print $fh _udent( <<"    EOF" );
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
     "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -160,6 +167,7 @@ sub start_nav {
         <title>$title</title>
         <link rel="stylesheet" type="text/css" href="$self->{css_path}podsite.css" />
         $base
+        $favicon
         <script type="text/javascript" src="$self->{js_path}podsite.js"></script>
         <meta name="generator" content="$class $version" />
       </head>
@@ -652,6 +660,7 @@ F<httpd.conf> you can just do this:
   -j --js-path PATH         Path to CSS file
      --replace-css          Replace existing CSS file
      --replace-js           Replace existing JavaScript file
+     --favicon-uri URI      Add a favicon linking to the given URI
   -V --verbose              Incremental verbose mode.
   -h --help                 Print a usage statement and exit.
   -M --man                  Print the complete documentation and exit.
@@ -750,6 +759,10 @@ If you're building a new site over an old site, by default Pod::Site will not
 replace the CSS and JavaScript files, seeing as you might have changed them.
 If you want it to replace them (and in general you ought to), pass a true
 value for these parameters.
+
+=item C<favicon_uri>
+
+Link to favicon file.  Extracts type from extension.
 
 =item C<verbose>
 

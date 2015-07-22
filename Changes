@@ -1,5 +1,7 @@
 Revision history for Perl extension Pod::Site.
 
+      - Added support for favicon (Arthur Axel fREW Schmidt)
+
 0.54
       - Fixed "Useless use of \E" warning in `t/base.t`.
 

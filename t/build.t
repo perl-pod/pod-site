@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
-use Test::More tests => 182;
+use Test::More tests => 183;
 #use Test::More 'no_plan';
 use File::Spec::Functions qw(tmpdir catdir catfile rel2abs);
 use File::Path qw(remove_tree);
@@ -26,6 +26,7 @@ my $base_uri = '/docs/';
 #END { remove_tree $tmpdir if -d $tmpdir }
 
 ok my $ps = Pod::Site->new({
+    favicon_uri  => 'favicon.ico',
     doc_root     => $doc_root,
     base_uri     => $base_uri,
     module_roots => [$mod_root, $bin_root],
@@ -99,7 +100,7 @@ $tx->is( 'count(/html)',      1, 'Should have 1 html element' );
 $tx->is( 'count(/html/head)', 1, 'Should have 1 head element' );
 $tx->is( 'count(/html/body)', 1, 'Should have 1 body element' );
 $tx->is( 'count(/html/*)', 2, 'Should have 2 elements in html' );
-$tx->is( 'count(/html/head/*)', 6, 'Should have 6 elements in head' );
+$tx->is( 'count(/html/head/*)', 7, 'Should have 7 elements in head' );
 
 # Check the head element.
 $tx->is(
@@ -121,6 +122,11 @@ $tx->is(
     '/html/head/link[@type="text/css"][@rel="stylesheet"]/@href',
     'podsite.css',
     'Should load the CSS',
+);
+$tx->is(
+    '/html/head/link[@type="img/ico"][@rel="icon"]/@href',
+    'favicon.ico',
+    'Should load the favicon',
 );
 $tx->is(
     '/html/head/script[@type="text/javascript"]/@src',
