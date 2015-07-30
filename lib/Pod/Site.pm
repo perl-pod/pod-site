@@ -382,11 +382,11 @@ sub nav_header {
 sub version {
     my $self = shift;
     return $self->{version} if $self->{version};
-    require Module::Build::ModuleInfo;
+    require Module::Metadata;
     my $mod  = $self->main_module;
     my $file = Pod::Site::Search->instance->name2path->{$mod}
         or die "Could not find $mod\n";
-    my $info = Module::Build::ModuleInfo->new_from_file( $file )
+    my $info = Module::Metadata->new_from_file( $file )
         or die "Could not find $file\n";
     return $self->{version} ||= $info->version;
 }
