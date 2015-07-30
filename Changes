@@ -1,10 +1,10 @@
 Revision history for Perl extension Pod::Site.
 
-      - Added support for favicon (Arthur Axel fREW Schmidt)
-
 0.54
       - Fixed "Useless use of \E" warning in `t/base.t`.
       - Fixed test failures matching list items.
+      - Added `--favicon-uri` to optionally link to a favicon. Contributed
+        by Arthur Axel fREW Schmidt.
 
 0.53  2011-11-29T17:44:06Z
       - Fixed a CSS issue where a `<pre>` block inside a list was getting the
