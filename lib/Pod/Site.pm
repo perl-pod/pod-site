@@ -24,7 +24,7 @@ use Object::Tiny qw(
     bin_files
 );
 
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 
 sub go {
     my $class = shift;
@@ -527,7 +527,7 @@ package Pod::Site::Search;
 use base 'Pod::Simple::Search';
 use strict;
 use warnings;
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 
 my $instance;
 sub instance { $instance }
@@ -545,7 +545,7 @@ package Pod::Site::XHTML;
 
 use strict;
 use base 'Pod::Simple::XHTML';
-our $VERSION = '0.55';
+our $VERSION = '0.56';
 
 sub new {
     my $self = shift->SUPER::new;
