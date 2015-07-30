@@ -24,3 +24,4 @@ API
 Bricolage
 CPAN
 Firefox
+favicon

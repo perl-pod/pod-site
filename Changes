@@ -9,6 +9,7 @@ Revision history for Perl extension Pod::Site.
         to Module::Metadata, its replacement. This is used solely to find
         module versions.
       - Added missing dependencies to Build.PL.
+      - Removed the Pod tests from the distribution.
 
 0.53  2011-11-29T17:44:06Z
       - Fixed a CSS issue where a `<pre>` block inside a list was getting the
