@@ -1,7 +1,7 @@
 sudo: false
 language: perl
 perl:
-  - "bleed"
+  - "blead"
   - "dev"
   - "5.22"
   - "5.20"
