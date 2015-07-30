@@ -1,6 +1,9 @@
 sudo: false
 language: perl
 perl:
+  - "bleed"
+  - "dev"
+  - "5.22"
   - "5.20"
   - "5.18"
   - "5.16"
@@ -8,3 +11,8 @@ perl:
   - "5.12"
   - "5.10"
   - "5.8"
+matrix:
+  allow_failures:
+    - perl: blead
+before_install:
+  - eval $(curl https://travis-perl.github.io/init) --auto
