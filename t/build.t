@@ -414,64 +414,64 @@ $tx->is(
 
 # Check that a local link is correct.
 $tx->is(
-    '//li[1]/p/a[@rel="section"]/@href',
+    '/html/body/ul[2]/li[1]/p/a[@rel="section"]/@href',
     '/docs/Heya/Man.html',
     'Local link href should be correct',
 );
 
 $tx->is(
-    '//li[1]/p/a[@rel="section"]/@name',
+    '/html/body/ul[2]/li[1]/p/a[@rel="section"]/@name',
     'Heya::Man',
     'Local link name should be correct',
 );
 
 $tx->is(
-    '//li[1]/p/a[@rel="section"]',
+    '/html/body/ul[2]/li[1]/p/a[@rel="section"]',
     'Heya::Man',
     'Local link text should be correct',
 );
 
 # Remote link should go to search.cpan.org.
 $tx->is(
-    '//li[2]/p/a[@href="http://search.cpan.org/perldoc?Test::XPath"]',
+    '/html/body/ul[2]/li[2]/p/a[@href="http://search.cpan.org/perldoc?Test::XPath"]',
     'Test::XPath',
     'Remote link should go to search.cpan.org'
 );
 
 # Check that local link with section is correct.
 $tx->is(
-    '//li[3]/p/a[@rel="subsection"]/@href',
+    '/html/body/ul[2]/li[3]/p/a[@rel="subsection"]/@href',
     '/docs/Foo/Bar.html#NAME',
     'Local link with section should have correct href',
 );
 
 $tx->is(
-    '//li[3]/p/a[@rel="subsection"]/@name',
+    '/html/body/ul[2]/li[3]/p/a[@rel="subsection"]/@name',
     'Foo::Bar',
     'Local link with subsection name should be correct',
 );
 
 $tx->is(
-    '//li[3]/p/a[@rel="subsection"]',
+    '/html/body/ul[2]/li[3]/p/a[@rel="subsection"]',
     '"NAME" in Foo::Bar',
     'Local link with subsection text should be correct',
 );
 
 # Check that local section is correct.
 $tx->is(
-    '//li[4]/p/a[@rel="subsection"]/@href',
+    '/html/body/ul[2]/li[4]/p/a[@rel="subsection"]/@href',
     '#DESCRIPTION',
     'Local subsection should have correct href',
 );
 
 $tx->is(
-    '//li[4]/p/a[@rel="subsection"]/@name',
+    '/html/body/ul[2]/li[4]/p/a[@rel="subsection"]/@name',
     'Hello',
     'Local subsection name should be correct',
 );
 
 $tx->is(
-    '//li[4]/p/a[@rel="subsection"]',
+    '/html/body/ul[2]/li[4]/p/a[@rel="subsection"]',
     '"DESCRIPTION"',
     'Local subsection text should be correct',
 );
