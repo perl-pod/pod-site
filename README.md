@@ -1,6 +1,9 @@
 Pod::Site
 =========
 
+[![CPAN version](https://badge.fury.io/pl/Pod-Site.svg)](http://badge.fury.io/pl/pod-site)
+[![Build Status](https://travis-ci.org/theory/pod-site.svg)](https://travis-ci.org/theory/fsa-rules)
+
 Build browsable HTML documentation for your app
 
 Description
