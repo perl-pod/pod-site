@@ -1,5 +1,7 @@
 Revision history for Perl extension Pod::Site.
 
+0.55
+
 0.54  2015-07-30T22:18:43Z
       - Fixed "Useless use of \E" warning in `t/base.t`.
       - Fixed test failures matching list items.
