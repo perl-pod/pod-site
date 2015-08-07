@@ -419,6 +419,7 @@ sub _config {
         'name|n=s'           => \$opts{name},
         'doc-root|d=s'       => \$opts{doc_root},
         'base-uri|u=s@'      => \$opts{base_uri},
+        'favicon-uri=s'      => \$opts{favicon_uri},
         'sample-module|s=s'  => \$opts{sample_module},
         'main-module|m=s'    => \$opts{main_module},
         'versioned-title|t!' => \$opts{versioned_title},
