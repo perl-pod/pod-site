@@ -24,6 +24,7 @@ my %config = (
     name            => undef,
     doc_root        => $doc_root,
     base_uri        => [$base_uri],
+    favicon_uri     => undef,
     module_roots    => [$mod_root],
     verbose         => 0,
     version         => undef,
@@ -115,6 +116,7 @@ LOTS: {
     local @ARGV = (
         '--doc-root'      => $doc_root,
         '--base-uri'      => $base_uri,
+        '--favicon-uri'   => 'my.icon',
         '--sample-module' => 'lib/Hello.pm',
         '--main-module'   => 'lib/Bye.pm',
         '--index-file'    => 'default.htm',
@@ -132,6 +134,7 @@ LOTS: {
     is_deeply $CLASS->_config, {
         doc_root        => $doc_root,
         base_uri        => [$base_uri],
+        favicon_uri     => 'my.icon',
         module_roots    => [$mod_root],
         verbose         => 3,
         version         => undef,
@@ -169,6 +172,7 @@ SHORT: {
     is_deeply $CLASS->_config, {
         doc_root        => $doc_root,
         base_uri        => [$base_uri],
+        favicon_uri     => undef,
         module_roots    => [$mod_root],
         verbose         => 3,
         version         => undef,
