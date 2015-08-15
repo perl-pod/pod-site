@@ -7,6 +7,7 @@ use File::Spec::Functions qw(tmpdir catdir catfile rel2abs);
 use File::Path qw(remove_tree);
 use Test::File;
 use Test::XPath;
+use File::Copy qw(cp);
 use utf8;
 
 my $CLASS;
@@ -22,7 +23,23 @@ my $bin_dir  = rel2abs $bin_root;
 my $tmpdir   = catdir tmpdir, "$$-pod-site-test";
 my $doc_root = catdir $tmpdir, 'doc_root';
 my $base_uri = '/docs/';
+my $suffix   = '';
+my $newline  = "\n";
 
+if ($^O eq 'MSWin32') {
+    $suffix   = '.bat';
+    $newline  = "\r\n";
+    my @bats;
+    for my $bin (
+        catfile($bin_dir, 'howdy'),
+        catfile($bin_dir, 'foo', 'yay'),
+    ) {
+        my $bat = $bin . $suffix;
+        cp $bin, $bat;
+        push @bats => $bat;
+    }
+    END { unlink for @bats }
+}
 #END { remove_tree $tmpdir if -d $tmpdir }
 
 ok my $ps = Pod::Site->new({
@@ -58,9 +75,9 @@ is_deeply $ps->mod_files, {
 }, 'Should have a module tree';
 
 is_deeply $ps->bin_files, {
-    'foo/yay' => "$bin_dir/foo/yay",
-    'howdy'   => "$bin_dir/howdy",
-    'yo'      => "$bin_dir/yo.pl"
+    'foo/yay' => catfile("$bin_dir/foo/yay$suffix"),
+    'howdy'   => catfile("$bin_dir/howdy$suffix"),
+    'yo'      => catfile("$bin_dir/yo.pl")
 }, 'Should have bin files';
 
 is $ps->main_module,   'Foo::Bar', 'Should have a main module';
@@ -156,7 +173,7 @@ $tx->ok( '/html/body/div[@id="nav"]', 'Should have nav div', sub {
         # Check first nav link.
         $_->is('./li[2]/@id', 'Foo', 'Second li should be Foo');
         $_->is('count(./li[2]/*)', 1, 'It should have one subelement');
-        $_->like('./li[2]', qr/Foo\n/, 'It should be labled "Foo"');
+        $_->like('./li[2]', qr/Foo$newline/, 'It should be labled "Foo"');
         $_->ok('./li[2]/ul', 'It should be an unordered list', sub {
             $_->is(
                 'count(./*)', 2,
@@ -408,7 +425,7 @@ $tx->is('/html/body/@class', 'pod', 'Body class should be "pod"');
 # Check that verbatim indentation is properly stripped.
 $tx->is(
     '//pre/code',
-    "my \$hey = Hello->new;\n\nsay \$hey->sup\n    if 1;",
+    "my \$hey = Hello->new;${newline}${newline}say \$hey->sup${newline}    if 1;",
     'Verbatim secton should have leading spaces stripped'
 );
 
