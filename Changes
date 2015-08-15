@@ -1,6 +1,6 @@
 Revision history for Perl extension Pod::Site.
 
-0.56
+0.56  2015-08-15T01:26:56Z
       - Fix --favicon-uri parameter. Contributed by Arthur Axel fREW Schmidt.
       - Fixed test failures on Windows.
 
